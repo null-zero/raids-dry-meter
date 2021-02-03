@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
-        name = "Raids Dry Meter",
+        name = "Dry Meter for Raids",
         description = "Tracks how dry you are while raiding with different group sizes"
 )
 public class RaidsDryMeterPlugin extends Plugin
@@ -90,7 +90,7 @@ public class RaidsDryMeterPlugin extends Plugin
         final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
 
         navButton = NavigationButton.builder()
-                .tooltip("Raids Dry Meter")
+                .tooltip("Dry Meter for Raids")
                 .icon(icon)
                 .priority(5)
                 .panel(panel)
