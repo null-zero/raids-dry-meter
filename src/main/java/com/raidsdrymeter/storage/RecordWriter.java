@@ -18,7 +18,7 @@ import static net.runelite.client.RuneLite.RUNELITE_DIR;
 @Singleton
 public class RecordWriter {
     private static final String FILE_EXTENSION = ".log";
-    private static final File LOOT_RECORD_DIR = new File(RUNELITE_DIR, "uniques");
+    private static final File LOOT_RECORD_DIR = new File(RUNELITE_DIR, "raids-dry-meter");
 
     private File playerFolder = LOOT_RECORD_DIR;
 
