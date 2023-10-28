@@ -1,11 +1,11 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.raidsdrymeter.data.UniqueItem;
-import com.raidsdrymeter.data.UniqueLog;
-import com.raidsdrymeter.storage.RaidRecord;
-import com.raidsdrymeter.storage.UniqueEntry;
+import com.raidsdrymetertest.data.UniqueItem;
+import com.raidsdrymetertest.data.UniqueLog;
+import com.raidsdrymetertest.storage.RaidRecord;
+import com.raidsdrymetertest.storage.UniqueEntry;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;

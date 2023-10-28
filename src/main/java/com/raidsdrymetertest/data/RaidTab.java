@@ -1,4 +1,4 @@
-package com.raidsdrymeter.data;
+package com.raidsdrymetertest.data;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;

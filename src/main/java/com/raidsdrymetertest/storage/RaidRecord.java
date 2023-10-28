@@ -1,4 +1,4 @@
-package com.raidsdrymeter.storage;
+package com.raidsdrymetertest.storage;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

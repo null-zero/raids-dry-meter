@@ -10,7 +10,7 @@ repositories {
 	mavenCentral()
 }
 
-def runeLiteVersion = '1.6.38'
+def runeLiteVersion = 'latest.release'
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -18,7 +18,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok:1.18.4'
 	annotationProcessor 'org.projectlombok:lombok:1.18.4'
 
-	testImplementation 'junit:junit:4.12'
+	testImplementation 'junit:junit:4.13.1'
 	testImplementation group: 'net.runelite', name:'client', version: runeLiteVersion
 }
 

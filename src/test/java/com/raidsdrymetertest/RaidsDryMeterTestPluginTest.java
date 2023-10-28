@@ -1,13 +1,13 @@
-package com.raidsdrymeter;
+package com.raidsdrymetertest;
 
 import net.runelite.client.RuneLite;
 import net.runelite.client.externalplugins.ExternalPluginManager;
 
-public class RaidsDryMeterPluginTest
+public class RaidsDryMeterTestPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(RaidsDryMeterPlugin.class);
+		ExternalPluginManager.loadBuiltin(RaidsDryMeterTestPlugin.class);
 		RuneLite.main(args);
 	}
 }

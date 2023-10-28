@@ -1,11 +1,9 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.util.QuantityFormatter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class EmptyPanel extends JPanel {

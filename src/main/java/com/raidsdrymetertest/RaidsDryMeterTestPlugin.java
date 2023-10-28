@@ -1,4 +1,4 @@
-package com.raidsdrymeter;
+package com.raidsdrymetertest;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -6,13 +6,13 @@ import com.google.common.collect.SetMultimap;
 import javax.inject.Inject;
 import javax.swing.*;
 
-import com.raidsdrymeter.data.RaidTab;
-import com.raidsdrymeter.data.UniqueItem;
-import com.raidsdrymeter.data.UniqueLog;
-import com.raidsdrymeter.storage.RaidRecord;
-import com.raidsdrymeter.storage.RecordWriter;
-import com.raidsdrymeter.storage.UniqueEntry;
-import com.raidsdrymeter.ui.RaidsDryMeterPanel;
+import com.raidsdrymetertest.data.RaidTab;
+import com.raidsdrymetertest.data.UniqueItem;
+import com.raidsdrymetertest.data.UniqueLog;
+import com.raidsdrymetertest.storage.RaidRecord;
+import com.raidsdrymetertest.storage.RecordWriter;
+import com.raidsdrymetertest.storage.UniqueEntry;
+import com.raidsdrymetertest.ui.RaidsDryMeterPanel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
-        name = "Dry Meter for Raids",
+        name = "Dry Meter for Raids Test",
         description = "Tracks how dry you are while raiding with different group sizes"
 )
-public class RaidsDryMeterPlugin extends Plugin
+public class RaidsDryMeterTestPlugin extends Plugin
 {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("([0-9]+)");
     @Inject
@@ -90,7 +90,7 @@ public class RaidsDryMeterPlugin extends Plugin
         final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
 
         navButton = NavigationButton.builder()
-                .tooltip("Dry Meter for Raids")
+                .tooltip("Dry Meter for Raids Test")
                 .icon(icon)
                 .priority(5)
                 .panel(panel)

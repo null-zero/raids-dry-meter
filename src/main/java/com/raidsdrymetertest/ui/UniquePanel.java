@@ -1,9 +1,8 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
-import com.raidsdrymeter.data.UniqueItem;
+import com.raidsdrymetertest.data.UniqueItem;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.QuantityFormatter;

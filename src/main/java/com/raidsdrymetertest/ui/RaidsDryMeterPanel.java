@@ -1,13 +1,12 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
-import com.raidsdrymeter.RaidsDryMeterPlugin;
-import com.raidsdrymeter.data.UniqueLog;
-import com.raidsdrymeter.storage.RaidRecord;
+import com.raidsdrymetertest.RaidsDryMeterTestPlugin;
+import com.raidsdrymetertest.data.UniqueLog;
+import com.raidsdrymetertest.storage.RaidRecord;
 import lombok.Getter;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.http.api.loottracker.LootRecordType;
 
 import javax.swing.*;
@@ -22,7 +21,7 @@ public class RaidsDryMeterPanel extends PluginPanel {
     private final static Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
     private final static Color BUTTON_HOVER_COLOR = ColorScheme.DARKER_GRAY_HOVER_COLOR;
 
-    private final RaidsDryMeterPlugin plugin;
+    private final RaidsDryMeterTestPlugin plugin;
 
     private UniqueLog uniqueLog;
 
@@ -37,13 +36,13 @@ public class RaidsDryMeterPanel extends PluginPanel {
     @Getter
     private final JPanel namePanel = new JPanel();
 
-    public RaidsDryMeterPanel(RaidsDryMeterPlugin raidsDryMeterPlugin, ItemManager itemManager)
+    public RaidsDryMeterPanel(RaidsDryMeterTestPlugin raidsDryMeterTestPlugin, ItemManager itemManager)
     {
         super();
 
         this.itemManager = itemManager;
 
-        this.plugin = raidsDryMeterPlugin;
+        this.plugin = raidsDryMeterTestPlugin;
 
         this.setBackground(ColorScheme.DARK_GRAY_COLOR);
         this.setLayout(new BorderLayout());

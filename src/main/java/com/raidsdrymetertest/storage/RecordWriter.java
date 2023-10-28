@@ -1,4 +1,4 @@
-package com.raidsdrymeter.storage;
+package com.raidsdrymetertest.storage;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;

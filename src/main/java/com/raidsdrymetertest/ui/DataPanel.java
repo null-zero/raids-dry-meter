@@ -1,12 +1,10 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
-import lombok.Setter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.QuantityFormatter;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.xml.crypto.Data;
 import java.awt.*;
 
 public class DataPanel extends JPanel {

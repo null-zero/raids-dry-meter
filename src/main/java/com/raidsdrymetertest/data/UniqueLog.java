@@ -1,7 +1,7 @@
-package com.raidsdrymeter.data;
+package com.raidsdrymetertest.data;
 
-import com.raidsdrymeter.storage.RaidRecord;
-import com.raidsdrymeter.storage.UniqueEntry;
+import com.raidsdrymetertest.storage.RaidRecord;
+import com.raidsdrymetertest.storage.UniqueEntry;
 import lombok.Getter;
 import net.runelite.http.api.loottracker.LootRecordType;
 

@@ -1,6 +1,6 @@
-package com.raidsdrymeter.ui;
+package com.raidsdrymetertest.ui;
 
-import com.raidsdrymeter.data.RaidTab;
+import com.raidsdrymetertest.data.RaidTab;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
