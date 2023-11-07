@@ -52,8 +52,23 @@ public enum  UniqueItem {
     JUSTICIAR_LEGUARDS(ItemID.JUSTICIAR_LEGGUARDS, RaidTab.TOB, 1, ((double)2/19)),
 
     //Very Rare
-    SCYTHE_OF_VITUR(ItemID.SCYTHE_OF_VITUR, RaidTab.TOB, 1, ((double)1/19))
+    SCYTHE_OF_VITUR(ItemID.SCYTHE_OF_VITUR, RaidTab.TOB, 1, ((double)1/19)),
 
+    //Tombs of Amascut uniques
+    //Common
+    OSMUMTENS_FANG(ItemID.OSMUMTENS_FANG, RaidTab.TOA, 0, ((double)1/3.429)),
+    LIGHTBEARER(ItemID.LIGHTBEARER, RaidTab.TOA, 0, ((double)1/3.429)),
+
+    //Rare
+    ELIDINIS_WARD(ItemID.ELIDINIS_WARD, RaidTab.TOA, 0, ((double)1/8)),
+
+    //Very Rare
+    MASORI_MASK(ItemID.MASORI_MASK, RaidTab.TOA, 1, ((double)1/12)),
+    MASORI_BODY(ItemID.MASORI_BODY, RaidTab.TOA, 1, ((double)1/12)),
+    MASORI_CHAPS(ItemID.MASORI_CHAPS, RaidTab.TOA, 1, ((double)1/12)),
+
+    //Mega Rare
+    TUMEKENS_SHADOW_UNCHARGED(ItemID.TUMEKENS_SHADOW_UNCHARGED, RaidTab.TOA, 2, ((double)1/24))
     ;
 
     private int itemID;

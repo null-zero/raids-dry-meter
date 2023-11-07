@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
@@ -76,7 +78,13 @@ public class RaidsDryMeterTestPlugin extends Plugin
     boolean personalUnique = false;
     boolean teamUnique = false;
     int partySize = 0;
+    int raidLevel = 0;
 
+	public static int invocationLevel = 0;
+	public static int getInvocationLevel()
+	{
+		return invocationLevel;
+	}
     List<RaidRecord> records;
 
     private boolean prepared = false;
@@ -125,7 +133,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
     @Override
     protected void shutDown()
     {
-        clientToolbar.removeNavigation(navButton);
+		clientToolbar.removeNavigation(navButton);
     }
     @Subscribe
     public void onGameStateChanged(final GameStateChanged event)
@@ -143,7 +151,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
         if(event.getName().equals("Chambers of Xeric")) {
 
             Collection<UniqueEntry> drops;
-
+            raidLevel = 0;
             partySize = client.getPlayers().size();
 
             drops = convertToUniqueRecords(event.getItems());
@@ -188,6 +196,62 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
             final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
             final RaidRecord record = new RaidRecord(event.getName(), kc, partySize, personalPoints, totalPoints, personalRaidsDry,
+                    teamRaidsDry, 0, 0, event.getType(), drops);
+            addRecord(record);
+
+            personalUnique = false;
+            teamUnique = false;
+
+
+            SwingUtilities.invokeLater(() -> panel.refreshUI());
+        } else if (event.getName().equals("Tombs of Amascut")) {
+
+            Collection<UniqueEntry> drops;
+            raidLevel = client.getVar(Varbits.TOA_RAID_LEVEL);
+            partySize = client.getPlayers().size();
+
+            drops = convertToUniqueRecords(event.getItems());
+
+            int totalPoints = client.getVar(Varbits.TOTAL_POINTS);
+            int personalPoints = client.getVar(Varbits.PERSONAL_POINTS);
+
+            for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
+                for(ItemStack item : event.getItems())
+                {
+                    if(item.getId() == uniqueId)
+                    {
+                        personalUnique = true;
+                    }
+                }
+            }
+
+            int personalRaidsDry;
+            int teamRaidsDry;
+
+            records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
+            if(records.size() == 0)
+            {
+                personalRaidsDry = 0;
+                teamRaidsDry = 0;
+            }
+            else {
+                int index = records.size() - 1;
+                personalRaidsDry = records.get(index).getPersonalRaidsDry();
+                teamRaidsDry = records.get(index).getTeamRaidsDry();
+            }
+
+            if(personalUnique)
+                personalRaidsDry = 0;
+            else
+                personalRaidsDry++;
+
+            if(teamUnique)
+                teamRaidsDry = 0;
+            else
+                teamRaidsDry++;
+
+            final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
+            final RaidRecord record = new RaidRecord(event.getName(), kc, getInvocationLevel(), partySize, personalPoints, totalPoints, personalRaidsDry,
                     teamRaidsDry, 0, 0, event.getType(), drops);
             addRecord(record);
 
@@ -268,7 +332,12 @@ public class RaidsDryMeterTestPlugin extends Plugin
         }
 
         final String chatMessage = Text.removeTags(event.getMessage());
+		Widget invoWidget = client.getWidget(WidgetID.TOA_RAID_GROUP_ID, 42);
 
+		if(invoWidget != null) {
+			String invoLevel = invoWidget.getText();
+			invocationLevel = Integer.parseInt(invoLevel.replaceAll("[^0-9]", ""));
+		}
         // Raids KC
         if (chatMessage.startsWith("Your completed Chambers of Xeric count is"))
         {
@@ -291,6 +360,17 @@ public class RaidsDryMeterTestPlugin extends Plugin
             }
         }
 
+        // Toa KC
+        if (chatMessage.startsWith("Your completed Tombs of Amascut"))
+        {
+            Matcher n = NUMBER_PATTERN.matcher(chatMessage);
+            if (n.find())
+            {
+                killCountMap.put("TOMBS OF AMASCUT", Integer.valueOf(n.group()));
+                return;
+            }
+        }
+
         if (chatMessage.startsWith("Special loot:"))
         {
             teamUnique = true;
@@ -298,7 +378,6 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
     }
 
-
-
-
 }
+
+

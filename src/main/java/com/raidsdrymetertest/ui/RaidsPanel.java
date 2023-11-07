@@ -83,7 +83,8 @@ public class RaidsPanel extends PluginPanel {
             c.gridy++;
         }
 
-        if(uniqueLog.getRecords().size() > 0)
+        //if(uniqueLog.getRecords().size() > 0)
+        if(uniqueLog.getName().equals("Chambers of Xeric"))
         {
             final int amount = uniqueLog.getRecords().size();
             final RaidRecord record = uniqueLog.getRecords().get(amount - 1);
@@ -170,6 +171,103 @@ public class RaidsPanel extends PluginPanel {
                 final DataPanel holder = new DataPanel("Coming soon!");
                 this.add(holder, c);
                 c.gridy++;
+        }
+        else if(uniqueLog.getName().equals("Tombs of Amascut"))
+        {
+            final int amount = uniqueLog.getRecords().size();
+            final RaidRecord record = uniqueLog.getRecords().get(amount - 1);
+            int personalRaidsDry = record.getPersonalRaidsDry();
+
+            int averageRaidLevel = 0;
+            int personalPointsDry = 0;
+            double personalRaidsOdds = 0;
+            int totalPoints = 0;
+            int personalStreak = 0;
+
+            if (uniqueLog.getRecords().size() > 0) {
+                int raidLevelSum = 0;
+                int x = 0;
+                for (; x < uniqueLog.getRecords().size(); x++) {
+                    raidLevelSum += uniqueLog.getRecords().get(x).getRaidLevel();
+                }
+                averageRaidLevel = raidLevelSum / x;
+            }
+
+            if(personalRaidsDry != 0)
+            {
+                int x = uniqueLog.getRecords().size() - personalRaidsDry;
+                for(;x < uniqueLog.getRecords().size(); x++)
+                {
+                    totalPoints += uniqueLog.getRecords().get(x).getPersonalPoints();
+                    if(totalPoints < 867600)
+                    {
+                        personalPointsDry += uniqueLog.getRecords().get(x).getPersonalPoints();
+                    }
+                    if(totalPoints > 867600)
+                    {
+                        totalPoints -= 867600;
+                        personalStreak++;
+                        personalPointsDry += uniqueLog.getRecords().get(x).getPersonalPoints();
+                    }
+                }
+
+                personalRaidsOdds = 867600/(double)(personalPointsDry/personalRaidsDry);
+
+            }
+
+            if(record.getKillCount() != -1)
+            {
+                final DataPanel p = new DataPanel("KillCount: ", record.getKillCount());
+                this.add(p, c);
+                c.gridy++;
+
+                System.out.println(uniqueLog.getName() + uniqueLog.getRecords().size());
+                final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size());
+                this.add(p2, c);
+                c.gridy++;
+
+                final DataPanel p3 = new DataPanel("Total Uniques: ", totalUniques);
+                this.add(p3, c);
+                c.gridy++;
+
+                String holder = String.format("%,.0f", (double) averageRaidLevel);
+                final DataPanel p4 = new DataPanel("Average Raid Level: ", holder);
+                this.add(p4, c);
+                c.gridy++;
+
+                holder = String.format("%,.0f", (double) personalPointsDry);
+                final DataPanel p6 = new DataPanel("Personal Points Dry: ", holder);
+                this.add(p6, c);
+                c.gridy++;
+
+                final DataPanel p7 = new DataPanel("Personal Raids Dry: ", personalRaidsDry);
+                this.add(p7, c);
+                c.gridy++;
+
+                holder = String.format("%,.2f", personalRaidsOdds);
+                final DataPanel p8 = new DataPanel("Personal Raids Odds: ", holder);
+                this.add(p8, c);
+                c.gridy++;
+
+                final DataPanel p9 = new DataPanel("Personal Raids Dry Streak: ", personalStreak);
+                this.add(p9, c);
+                c.gridy++;
+
+                final DataPanel p12 = new DataPanel("Gp From Personal Uniques: ", QuantityFormatter.quantityToStackSize((long)totalGPFromUniques));
+                this.add(p12, c);
+                c.gridy++;
+
+                holder = String.format("%,.2f", getEstimateGpPerPoint());
+                final DataPanel p13 = new DataPanel("Est. Gp per Point: ", holder);
+                this.add(p13, c);
+                c.gridy++;
+
+                holder = String.format("%,.2f", getActualGpPerPoints());
+                final DataPanel p14 = new DataPanel("Actual. Gp Per Personal Point: ", holder);
+                this.add(p14, c);
+                c.gridy++;
+
+            }
         }
     }
 

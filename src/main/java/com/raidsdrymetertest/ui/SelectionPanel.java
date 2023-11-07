@@ -77,7 +77,7 @@ public class SelectionPanel extends JPanel {
         c.gridy = 0;
 
         final MaterialTabGroup thisTabGroup = new MaterialTabGroup();
-        thisTabGroup.setLayout(new GridLayout(0, 2, 7, 0));
+        thisTabGroup.setLayout(new GridLayout(0, 3, 7, 0));
         thisTabGroup.setBorder(new EmptyBorder(0, 0, 0, 0));
 
         final Collection<RaidTab> categoryTabs = RaidTab.getByCategoryName("Raids");

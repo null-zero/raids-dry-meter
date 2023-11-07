@@ -2,18 +2,22 @@ package com.raidsdrymetertest.storage;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import net.runelite.http.api.loottracker.LootRecordType;
 
 import java.util.Collection;
 
 @Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class RaidRecord {
+
     private final String name;
     private final int killCount;
+    private int raidLevel;
     private final int partySize;
     private final int personalPoints;
-    private final int teamPoints;
+    private final double teamPoints;
     private final int personalRaidsDry;
     private final int teamRaidsDry;
     private final int personalDeaths;
@@ -21,9 +25,37 @@ public class RaidRecord {
     private LootRecordType type;
     final Collection<UniqueEntry> uniques;
 
+    public RaidRecord(String n, int kc, int ps,int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
+        name = n;
+        killCount = kc;
+        partySize = ps;
+        personalPoints = pp;
+        teamPoints = tp;
+        personalRaidsDry = prd;
+        teamRaidsDry = trd;
+        personalDeaths = pd;
+        teamDeaths = td;
+        type = t;
+        uniques = d;
+    }
+    public RaidRecord(String n, int kc, int rl, int ps,int pp, double tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
+        name = n;
+        killCount = kc;
+        raidLevel = rl;
+        partySize = ps;
+        personalPoints = pp;
+        teamPoints = tp;
+        personalRaidsDry = prd;
+        teamRaidsDry = trd;
+        personalDeaths = pd;
+        teamDeaths = td;
+        type = t;
+        uniques = d;
+    }
     public void addUnique(UniqueEntry uniqueEntry)
     {
         uniques.add(uniqueEntry);
     }
 
 }
+

@@ -122,7 +122,7 @@ public class RecordWriter {
 
     public synchronized boolean addRaidRecord(RaidRecord rec)
     {
-        if(rec.getName().equals("Chambers of Xeric") || rec.getName().equals("Theater of Blood")) {
+        if(rec.getName().equals("Chambers of Xeric") || rec.getName().equals("Theater of Blood") || rec.getName().equals("Tombs of Amascut")) {
             // Grab file
             final String fileName = raidNameToFileName(rec.getName());
             final File lootFile = new File(eventFolders.get(rec.getType()), fileName);
