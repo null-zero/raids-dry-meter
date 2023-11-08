@@ -2,10 +2,14 @@ package com.raidsdrymetertest.ui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.jagex.oldscape.pub.OAuthApi;
 import com.raidsdrymetertest.data.UniqueItem;
 import com.raidsdrymetertest.data.UniqueLog;
 import com.raidsdrymetertest.storage.RaidRecord;
 import com.raidsdrymetertest.storage.UniqueEntry;
+
+import javax.inject.Inject;
+import net.runelite.api.Client;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
@@ -18,6 +22,9 @@ import java.util.List;
 
 public class RaidsPanel extends PluginPanel {
 
+	@Inject
+	private Client client;
+
     private final static Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
 
     private final ItemManager itemManager;
@@ -26,7 +33,10 @@ public class RaidsPanel extends PluginPanel {
     private int totalUniques = 0;
     private double totalGPFromUniques = 0;
 
-    RaidsPanel(
+	private com.raidsdrymetertest.features.pointstracker.PartyPointsTracker partyPointsTracker;
+	private com.raidsdrymetertest.features.pointstracker.PointsTracker pointsTracker;
+
+	RaidsPanel(
             final UniqueLog log,
             final ItemManager itemManager
     ){
@@ -47,6 +57,7 @@ public class RaidsPanel extends PluginPanel {
         c.weightx = 1;
         c.gridx = 0;
         c.gridy = 0;
+		c.gridwidth = GridBagConstraints.REMAINDER;
 
         final Multimap<Integer, UniqueItem> positionMap = ArrayListMultimap.create();
         final Set<Integer> uniqueIds = new HashSet<>();
@@ -127,7 +138,6 @@ public class RaidsPanel extends PluginPanel {
                 final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size());
                 this.add(p2, c);
                 c.gridy++;
-
                 final DataPanel p3 = new DataPanel("Total Uniques: ", totalUniques);
                 this.add(p3, c);
                 c.gridy++;
@@ -174,23 +184,33 @@ public class RaidsPanel extends PluginPanel {
         }
         else if(uniqueLog.getName().equals("Tombs of Amascut"))
         {
+
             final int amount = uniqueLog.getRecords().size();
             final RaidRecord record = uniqueLog.getRecords().get(amount - 1);
             int personalRaidsDry = record.getPersonalRaidsDry();
 
             int averageRaidLevel = 0;
+			int entryRaids = 0;
+			int normalRaids = 0;
+			int expertRaids = 0;
             int personalPointsDry = 0;
             double personalRaidsOdds = 0;
             int totalPoints = 0;
             int personalStreak = 0;
 
             if (uniqueLog.getRecords().size() > 0) {
-                int raidLevelSum = 0;
+                int raidLevel = 0;
                 int x = 0;
                 for (; x < uniqueLog.getRecords().size(); x++) {
-                    raidLevelSum += uniqueLog.getRecords().get(x).getRaidLevel();
+					raidLevel = uniqueLog.getRecords().get(x).getRaidLevel();
+                   	if (raidLevel <= 150) {
+						   entryRaids++;
+					} else if (raidLevel > 300) {
+						   expertRaids++;
+					} else {
+						   normalRaids++;
+					}
                 }
-                averageRaidLevel = raidLevelSum / x;
             }
 
             if(personalRaidsDry != 0)
@@ -219,38 +239,77 @@ public class RaidsPanel extends PluginPanel {
             {
                 final DataPanel p = new DataPanel("KillCount: ", record.getKillCount());
                 this.add(p, c);
+				c.fill = GridBagConstraints.HORIZONTAL;
                 c.gridy++;
+				c.insets = new Insets(0, 0, 0, 0);
+
+//				if (client.getAccountHash() = null)
+//				{
+//				long accountHash = client.getAccountHash();
+//				String holder = String.format("%s", accountHash);
+//				final DataPanel p1 = new DataPanel("user ", holder);
+//				this.add(p1, c);
+//				c.fill = GridBagConstraints.HORIZONTAL;
+//				c.gridy++;
+//				c.insets = new Insets(0, 0, 0, 0);
+//				};
+//				if (client.getAccountHash() == 1L)
+//				{
+//					System.out.println(client.getAccountHash());
+//				}
 
                 System.out.println(uniqueLog.getName() + uniqueLog.getRecords().size());
                 final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size());
                 this.add(p2, c);
+				c.insets = new Insets(0, 0, 0, 1);
                 c.gridy++;
+				c.weightx = 0.3;
+				c.ipadx = 20;
+				c.gridwidth = 1;
 
-                final DataPanel p3 = new DataPanel("Total Uniques: ", totalUniques);
+                final DataPanel p3 = new DataPanel("Entry:", entryRaids);
                 this.add(p3, c);
-                c.gridy++;
+				c.insets = new Insets(0, 1, 0, 1);
+                c.gridx++;
+				c.weightx = 0.3;
+				c.ipadx = 20;
+				c.gridwidth = 1;
 
-                String holder = String.format("%,.0f", (double) averageRaidLevel);
-                final DataPanel p4 = new DataPanel("Average Raid Level: ", holder);
-                this.add(p4, c);
-                c.gridy++;
+				final DataPanel p4 = new DataPanel("Normal:", normalRaids);
+				this.add(p4, c);
+				c.insets = new Insets(0, 1, 0, 0);
+				c.gridx++;
+				c.weightx = 0.3;
+				c.ipadx = 20;
+				c.gridwidth = 1;
 
-                holder = String.format("%,.0f", (double) personalPointsDry);
-                final DataPanel p6 = new DataPanel("Personal Points Dry: ", holder);
-                this.add(p6, c);
-                c.gridy++;
+				final DataPanel p5 = new DataPanel("Expert:", expertRaids);
+				this.add(p5, c);
+				c.insets = new Insets(0, 0, 0, 0);
+				c.gridx = 0;
+				c.gridy++;
+				c.gridwidth = GridBagConstraints.REMAINDER;
 
-                final DataPanel p7 = new DataPanel("Personal Raids Dry: ", personalRaidsDry);
+				final DataPanel p6 = new DataPanel("Total Uniques: ", totalUniques);
+				this.add(p6, c);
+				c.gridy++;
+
+                String holder = String.format("%,.0f", (double) personalPointsDry);
+                final DataPanel p7 = new DataPanel("Personal Points Dry: ", holder);
                 this.add(p7, c);
                 c.gridy++;
 
-                holder = String.format("%,.2f", personalRaidsOdds);
-                final DataPanel p8 = new DataPanel("Personal Raids Odds: ", holder);
+                final DataPanel p8 = new DataPanel("Personal Raids Dry: ", personalRaidsDry);
                 this.add(p8, c);
                 c.gridy++;
 
-                final DataPanel p9 = new DataPanel("Personal Raids Dry Streak: ", personalStreak);
+                holder = String.format("%,.2f", personalRaidsOdds);
+                final DataPanel p9 = new DataPanel("Personal Raids Odds: ", holder);
                 this.add(p9, c);
+                c.gridy++;
+
+                final DataPanel p10 = new DataPanel("Personal Raids Dry Streak: ", personalStreak);
+                this.add(p10, c);
                 c.gridy++;
 
                 final DataPanel p12 = new DataPanel("Gp From Personal Uniques: ", QuantityFormatter.quantityToStackSize((long)totalGPFromUniques));
@@ -267,10 +326,15 @@ public class RaidsPanel extends PluginPanel {
                 this.add(p14, c);
                 c.gridy++;
 
+
+//				holder = String.valueOf(pointsTracker.getPersonalTotalPoints() null ? pointsTracker.getPersonalTotalPoints() : "" );
+//				final DataPanel p15 = new DataPanel("test: ", holder);
+//				this.add(p15, c);
+//				c.gridy++;
+				//System.out.println(pointsTracker.getPersonalTotalPoints());
             }
         }
     }
-
     void addedRecord(final RaidRecord record)
     {
         uniqueLog.addRecord(record);

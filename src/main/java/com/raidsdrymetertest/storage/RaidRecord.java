@@ -17,7 +17,7 @@ public class RaidRecord {
     private int raidLevel;
     private final int partySize;
     private final int personalPoints;
-    private final double teamPoints;
+    private final int teamPoints;
     private final int personalRaidsDry;
     private final int teamRaidsDry;
     private final int personalDeaths;
@@ -38,7 +38,7 @@ public class RaidRecord {
         type = t;
         uniques = d;
     }
-    public RaidRecord(String n, int kc, int rl, int ps,int pp, double tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
+    public RaidRecord(String n, int kc, int rl, int ps, int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
         name = n;
         killCount = kc;
         raidLevel = rl;

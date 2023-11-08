@@ -1,8 +1,10 @@
 package com.raidsdrymetertest;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
+import com.google.inject.Binder;
 import javax.inject.Inject;
 import javax.swing.*;
 
@@ -13,6 +15,7 @@ import com.raidsdrymetertest.storage.RaidRecord;
 import com.raidsdrymetertest.storage.RecordWriter;
 import com.raidsdrymetertest.storage.UniqueEntry;
 import com.raidsdrymetertest.ui.RaidsDryMeterPanel;
+import com.raidsdrymetertest.features.pointstracker.PointsTracker;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -40,6 +43,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.raidsdrymetertest.module.ComponentManager;
+import com.raidsdrymetertest.module.RaidsDryMeterTestModule;
 
 @Slf4j
 @PluginDescriptor(
@@ -69,6 +75,9 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
     String raidType;
 
+	@Inject
+	private PointsTracker pointsTracker;
+
     private RaidsDryMeterPanel panel;
     private NavigationButton navButton;
 
@@ -90,10 +99,25 @@ public class RaidsDryMeterTestPlugin extends Plugin
     private boolean prepared = false;
 
     private Map<String, Integer> killCountMap = new HashMap<>();
+	@com.google.inject.Inject
+	private ConfigMigrationService configMigrationService;
 
+	private ComponentManager componentManager = null;
+
+	@Override
+	public void configure(Binder binder)
+	{
+		binder.install(new RaidsDryMeterTestModule());
+	}
     @Override
     protected void startUp() throws Exception
     {
+
+		if (componentManager == null)
+		{
+			componentManager = injector.getInstance(ComponentManager.class);
+		}
+		componentManager.onPluginStart();
         panel = new RaidsDryMeterPanel(this, itemManager);
         final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
 
@@ -123,7 +147,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
             });
         }
 
-        if (client.getGameState().equals(GameState.LOGGED_IN) || client.getGameState().equals(GameState.LOADING))
+        if (client.getGameState().equals(GameState.LOADING))
         {
             updateWriterUsername();
         }
@@ -135,14 +159,65 @@ public class RaidsDryMeterTestPlugin extends Plugin
     {
 		clientToolbar.removeNavigation(navButton);
     }
-    @Subscribe
-    public void onGameStateChanged(final GameStateChanged event)
-    {
-        if (event.getGameState() == GameState.LOGGING_IN)
-        {
-            updateWriterUsername();
-        }
-    }
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		if (event.getGameState() == GameState.LOGGED_IN)
+		{
+			onLoggedInGameState();
+		}
+//		} else if (event.getGameState() == GameState.LOGIN_SCREEN && previouslyLoggedIn) {
+//			//this randomly fired at night hours after i had logged off...so i'm adding this guard here.
+//			if (currentlyLoggedInAccount != null && client.getGameState() != GameState.LOGGED_IN) {
+//				handleLogout();
+//			}
+//		}
+	}
+
+	private void onLoggedInGameState() {
+		//keep scheduling this task until it returns true (when we have access to a display name)
+		clientThread.invokeLater(() ->
+		{
+			//we return true in this case as something went wrong and somehow the state isn't logged in, so we don't
+			//want to keep scheduling this task.
+			if (client.getGameState() != GameState.LOGGED_IN) {
+				return true;
+			}
+
+			final Player player = client.getLocalPlayer();
+
+			//player is null, so we can't get the display name so, return false, which will schedule
+			//the task on the client thread again.
+			if (player == null) {
+				return false;
+			}
+
+			final String name = player.getName();
+
+			if (name == null) {
+				return false;
+			}
+
+			if (name.equals("")) {
+				return false;
+			}
+
+			System.out.println("aaaaaa " + name);
+			updateWriterUsername();
+			//stops scheduling this task
+			return true;
+		});
+	}
+
+//	@Subscribe
+//    public void onGameStateChanged(final GameStateChanged event)
+//    {
+//        if (event.getGameState() == GameState.LOADING)
+//        {
+//			System.out.println((client.getLocalPlayer().getName()));
+//            updateWriterUsername();
+//        }
+//    }
 
     @Subscribe
     public void onLootReceived(final LootReceived event)
@@ -212,8 +287,8 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
             drops = convertToUniqueRecords(event.getItems());
 
-            int totalPoints = client.getVar(Varbits.TOTAL_POINTS);
-            int personalPoints = client.getVar(Varbits.PERSONAL_POINTS);
+            int totalPoints = pointsTracker.getTotalPoints();
+            int personalPoints = pointsTracker.getPersonalTotalPoints();
 
             for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
                 for(ItemStack item : event.getItems())
@@ -270,7 +345,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
     private void updateWriterUsername()
     {
-        writer.setPlayerUsername(client.getUsername());
+        writer.setPlayerUsername(client.getLocalPlayer().getName());
         localPlayerNameChanged();
     }
 
