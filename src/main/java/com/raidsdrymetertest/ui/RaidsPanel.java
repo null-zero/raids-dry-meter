@@ -2,23 +2,26 @@ package com.raidsdrymetertest.ui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.jagex.oldscape.pub.OAuthApi;
 import com.raidsdrymetertest.data.UniqueItem;
 import com.raidsdrymetertest.data.UniqueLog;
 import com.raidsdrymetertest.storage.RaidRecord;
 import com.raidsdrymetertest.storage.UniqueEntry;
-
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
+import javax.swing.border.EmptyBorder;
 import net.runelite.api.Client;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.QuantityFormatter;
-
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
 
 public class RaidsPanel extends PluginPanel {
 
@@ -94,8 +97,8 @@ public class RaidsPanel extends PluginPanel {
             c.gridy++;
         }
 
-        //if(uniqueLog.getRecords().size() > 0)
-        if(uniqueLog.getName().equals("Chambers of Xeric"))
+        if(!uniqueLog.getRecords().isEmpty() && uniqueLog.getName().equals("Chambers of Xeric"))
+//        if(uniqueLog.getName().equals("Chambers of Xeric"))
         {
             final int amount = uniqueLog.getRecords().size();
             final RaidRecord record = uniqueLog.getRecords().get(amount - 1);
@@ -182,7 +185,7 @@ public class RaidsPanel extends PluginPanel {
                 this.add(holder, c);
                 c.gridy++;
         }
-        else if(uniqueLog.getName().equals("Tombs of Amascut"))
+        else if( !uniqueLog.getRecords().isEmpty() && uniqueLog.getName().equals("Tombs of Amascut"))
         {
 
             final int amount = uniqueLog.getRecords().size();
@@ -191,26 +194,43 @@ public class RaidsPanel extends PluginPanel {
 
             int averageRaidLevel = 0;
 			int entryRaids = 0;
+			int entryKC = 0;
 			int normalRaids = 0;
+			int normalKC = 0;
 			int expertRaids = 0;
+			int expertKC = 0;
             int personalPointsDry = 0;
             double personalRaidsOdds = 0;
             int totalPoints = 0;
             int personalStreak = 0;
+			int raidLevelKC = 0;
+			int totalKC = 0;
 
             if (uniqueLog.getRecords().size() > 0) {
                 int raidLevel = 0;
                 int x = 0;
+
                 for (; x < uniqueLog.getRecords().size(); x++) {
 					raidLevel = uniqueLog.getRecords().get(x).getRaidLevel();
+					raidLevelKC = uniqueLog.getRecords().get(x).getKillCount();
                    	if (raidLevel <= 150) {
 						   entryRaids++;
+						   if (raidLevelKC > entryKC) {
+							   entryKC = raidLevelKC;
+						   }
 					} else if (raidLevel > 300) {
 						   expertRaids++;
+						if (raidLevelKC > entryKC) {
+							expertKC = raidLevelKC;
+						}
 					} else {
+						if (raidLevelKC > entryKC) {
+							normalKC = raidLevelKC;
+						}
 						   normalRaids++;
 					}
                 }
+				totalKC = entryKC + expertKC + normalKC;
             }
 
             if(personalRaidsDry != 0)
@@ -237,11 +257,18 @@ public class RaidsPanel extends PluginPanel {
 
             if(record.getKillCount() != -1)
             {
-                final DataPanel p = new DataPanel("KillCount: ", record.getKillCount());
-                this.add(p, c);
+				final DataPanel p = new DataPanel("Entry", "Normal", "Expert");
 				c.fill = GridBagConstraints.HORIZONTAL;
+				c.insets = new Insets(4, 0, 0, 0);
+				c.gridy++;
+				this.add(p, c);
+
+//                final DataPanel p1 = new DataPanel("KillCount: ", record.getKillCount());
+				final DataPanel p1 = new DataPanel("KillCount: ", totalKC, entryKC, normalKC, expertKC);
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.insets = new Insets(4, 0, 0, 0);
                 c.gridy++;
-				c.insets = new Insets(0, 0, 0, 0);
+				this.add(p1, c);
 
 //				if (client.getAccountHash() = null)
 //				{
@@ -258,80 +285,81 @@ public class RaidsPanel extends PluginPanel {
 //					System.out.println(client.getAccountHash());
 //				}
 
-                System.out.println(uniqueLog.getName() + uniqueLog.getRecords().size());
-                final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size());
-                this.add(p2, c);
-				c.insets = new Insets(0, 0, 0, 1);
-                c.gridy++;
-				c.weightx = 0.3;
-				c.ipadx = 20;
-				c.gridwidth = 1;
 
-                final DataPanel p3 = new DataPanel("Entry:", entryRaids);
-                this.add(p3, c);
-				c.insets = new Insets(0, 1, 0, 1);
-                c.gridx++;
-				c.weightx = 0.3;
-				c.ipadx = 20;
-				c.gridwidth = 1;
 
-				final DataPanel p4 = new DataPanel("Normal:", normalRaids);
-				this.add(p4, c);
-				c.insets = new Insets(0, 1, 0, 0);
-				c.gridx++;
-				c.weightx = 0.3;
-				c.ipadx = 20;
-				c.gridwidth = 1;
-
-				final DataPanel p5 = new DataPanel("Expert:", expertRaids);
-				this.add(p5, c);
-				c.insets = new Insets(0, 0, 0, 0);
-				c.gridx = 0;
+//                System.out.println(uniqueLog.getName() + uniqueLog.getRecords().size());
+                final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size(), entryRaids, normalRaids, expertRaids);
+				c.insets = new Insets(4, 0, 0, 0);
 				c.gridy++;
-				c.gridwidth = GridBagConstraints.REMAINDER;
+				c.ipadx = 0;
+				c.ipady = 0;
+				this.add(p2, c);
+
+//                final DataPanel p3 = new DataPanel("Entry:", entryRaids);
+//				c.insets = new Insets(0, 0, 0, 1);
+//                c.gridx++;
+//				c.gridy++;
+//				c.weightx = 0.3;
+//				c.ipadx = 20;
+//				c.gridwidth = 1;
+//				this.add(p3, c);
+//
+//				final DataPanel p4 = new DataPanel("Normal:", normalRaids);
+//				c.insets = new Insets(0, 1, 0, 1);
+//				c.gridx++;
+//				c.weightx = 0.3;
+//				c.ipadx = 20;
+//				c.gridwidth = 1;
+//				this.add(p4, c);
+//
+//				final DataPanel p5 = new DataPanel("Expert:", expertRaids);
+//				c.insets = new Insets(0, 1, 0, 0);
+//				c.gridx++;
+//				c.weightx = 0.3;
+//				c.ipadx = 20;
+//				c.gridwidth = 1;
+//				this.add(p5, c);
 
 				final DataPanel p6 = new DataPanel("Total Uniques: ", totalUniques);
-				this.add(p6, c);
+				c.insets = new Insets(0, 0, 0, 0);
+				c.gridx = 0;
+				c.gridwidth = GridBagConstraints.REMAINDER;
 				c.gridy++;
+				this.add(p6, c);
 
                 String holder = String.format("%,.0f", (double) personalPointsDry);
                 final DataPanel p7 = new DataPanel("Personal Points Dry: ", holder);
-                this.add(p7, c);
-                c.gridy++;
+				c.gridy++;
+				this.add(p7, c);
 
                 final DataPanel p8 = new DataPanel("Personal Raids Dry: ", personalRaidsDry);
+				c.gridy++;
                 this.add(p8, c);
-                c.gridy++;
 
                 holder = String.format("%,.2f", personalRaidsOdds);
                 final DataPanel p9 = new DataPanel("Personal Raids Odds: ", holder);
+				c.gridy++;
                 this.add(p9, c);
-                c.gridy++;
 
                 final DataPanel p10 = new DataPanel("Personal Raids Dry Streak: ", personalStreak);
+				c.gridy++;
                 this.add(p10, c);
-                c.gridy++;
 
                 final DataPanel p12 = new DataPanel("Gp From Personal Uniques: ", QuantityFormatter.quantityToStackSize((long)totalGPFromUniques));
+				c.gridy++;
                 this.add(p12, c);
-                c.gridy++;
 
                 holder = String.format("%,.2f", getEstimateGpPerPoint());
                 final DataPanel p13 = new DataPanel("Est. Gp per Point: ", holder);
+				c.gridy++;
                 this.add(p13, c);
-                c.gridy++;
 
                 holder = String.format("%,.2f", getActualGpPerPoints());
                 final DataPanel p14 = new DataPanel("Actual. Gp Per Personal Point: ", holder);
+				c.gridy++;
                 this.add(p14, c);
-                c.gridy++;
 
-
-//				holder = String.valueOf(pointsTracker.getPersonalTotalPoints() null ? pointsTracker.getPersonalTotalPoints() : "" );
-//				final DataPanel p15 = new DataPanel("test: ", holder);
-//				this.add(p15, c);
-//				c.gridy++;
-				//System.out.println(pointsTracker.getPersonalTotalPoints());
+				c.gridy++;
             }
         }
     }

@@ -56,7 +56,7 @@ public class PointsOverlay extends OverlayPanel implements PluginLifecycleCompon
 	{
 		panelComponent.getChildren().add(
 			TitleComponent.builder()
-				.text("ToA Points")
+				.text("ToA Points Test")
 				.build()
 		);
 

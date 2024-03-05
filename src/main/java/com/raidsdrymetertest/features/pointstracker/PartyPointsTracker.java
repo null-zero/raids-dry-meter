@@ -3,11 +3,16 @@ package com.raidsdrymetertest.features.pointstracker;
 import com.raidsdrymetertest.RaidsDryMeterTestConfig;
 import com.raidsdrymetertest.module.PluginLifecycleComponent;
 import com.raidsdrymetertest.util.RaidState;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PartyChanged;
@@ -16,6 +21,7 @@ import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserJoin;
 import net.runelite.client.party.events.UserPart;
 
+@Slf4j
 @Singleton
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class PartyPointsTracker implements PluginLifecycleComponent
@@ -24,8 +30,12 @@ public class PartyPointsTracker implements PluginLifecycleComponent
 	private final WSClient wsClient;
 	private final EventBus eventBus;
 	private final PartyService partyService;
+	private final ScheduledExecutorService partySendEs;
 
 	private final Map<Long, Integer> partyPoints = new HashMap<>();
+
+	private final AtomicInteger partySequenceId = new AtomicInteger(0);
+	private long partyDontSendUntil = -1;
 
 	@Override
 	public boolean isEnabled(RaidsDryMeterTestConfig config, RaidState raidState)
@@ -73,6 +83,27 @@ public class PartyPointsTracker implements PluginLifecycleComponent
 		clearPartyPointsMap();
 	}
 
+	public void schedulePointsUpdate(int points)
+	{
+		if (!isInParty())
+		{
+			return;
+		}
+
+		// queue up a points update at the next available deadline (30s after last message)
+		final int thisReqId = this.partySequenceId.incrementAndGet();
+		partySendEs.schedule(() ->
+		{
+			// make sure we're still the most recent message
+			if (thisReqId != this.partySequenceId.get())
+			{
+				return;
+			}
+
+			sendPointsUpdate(points);
+		}, Math.max(0, partyDontSendUntil - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+	}
+
 	public void sendPointsUpdate(int points)
 	{
 		if (!isInParty())
@@ -82,6 +113,7 @@ public class PartyPointsTracker implements PluginLifecycleComponent
 
 		PointsMessage message = new PointsMessage(points);
 		partyService.send(message);
+		partyDontSendUntil = System.currentTimeMillis() + (30 * 1000);
 	}
 
 	public void clearPartyPointsMap()

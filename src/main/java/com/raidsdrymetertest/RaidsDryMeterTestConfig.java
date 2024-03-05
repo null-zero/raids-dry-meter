@@ -26,7 +26,7 @@ public interface RaidsDryMeterTestConfig extends Config
 	)
 	default boolean pointsTrackerOverlayEnable()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
@@ -38,7 +38,7 @@ public interface RaidsDryMeterTestConfig extends Config
 	)
 	default boolean pointsTrackerShowRoomPoints()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
@@ -62,7 +62,7 @@ public interface RaidsDryMeterTestConfig extends Config
 	)
 	default boolean pointsTrackerShowPetChance()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(

@@ -1,12 +1,12 @@
 package com.raidsdrymetertest.features.pointstracker;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.raidsdrymetertest.RaidsDryMeterTestConfig;
 import com.raidsdrymetertest.module.PluginLifecycleComponent;
 import com.raidsdrymetertest.util.RaidState;
 import com.raidsdrymetertest.util.RaidStateChanged;
 import com.raidsdrymetertest.util.RaidStateTracker;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -50,7 +50,7 @@ public class PointsTracker implements PluginLifecycleComponent
 	private static final int BASE_POINTS = 5000;
 	private static final int MAX_ROOM_POINTS = 20_000;
 
-	// i'm not sure whether BASE_POINTS should be added
+	// I'm not sure whether BASE_POINTS should be added
 	// i.e. is it 64k available to earn pre- or post- 5000 pt subtraction
 	private static final int MAX_TOTAL_POINTS = 64_000 + BASE_POINTS;
 
@@ -184,19 +184,19 @@ public class PointsTracker implements PluginLifecycleComponent
 			case SCABARAS:
 				personalTotalPoints += 300;
 				nonPartyPoints += 300;
-				updatePersonalPartyPoints();
+				updatePersonalPartyPoints(false);
 				break;
 
 			case APMEKEN:
 				personalTotalPoints += 450;
 				nonPartyPoints += 300;
-				updatePersonalPartyPoints();
+				updatePersonalPartyPoints(false);
 				break;
 
 			case CRONDIS:
 				personalTotalPoints += 400;
 				nonPartyPoints += 300;
-				updatePersonalPartyPoints();
+				updatePersonalPartyPoints(false);
 				break;
 
 			case HET:
@@ -220,27 +220,29 @@ public class PointsTracker implements PluginLifecycleComponent
 		}
 		else if (e.getMessage().startsWith(DEATH_MESSAGE))
 		{
-			personalTotalPoints -= Math.max(0.2 * personalTotalPoints, 1000);
+			personalTotalPoints -= (int) Math.max(0.2 * personalTotalPoints, 1000);
 			if (personalTotalPoints < 0)
 			{
 				personalTotalPoints = 0;
 			}
 
-			updatePersonalPartyPoints();
+			updatePersonalPartyPoints(false);
 		}
 		else if (e.getMessage().startsWith(ROOM_FAIL_MESSAGE))
 		{
 			wardenDowns = 0;
 			personalRoomPoints = 0;
-			updatePersonalPartyPoints();
+			updatePersonalPartyPoints(false);
 		}
 		else if (e.getMessage().startsWith(ROOM_FINISH_MESSAGE))
 		{
 			personalTotalPoints = Math.min(MAX_TOTAL_POINTS, personalTotalPoints + personalRoomPoints);
 			personalRoomPoints = 0;
-			updatePersonalPartyPoints();
 
-			if (e.getMessage().contains("Wardens") && config.pointsTrackerPostRaidMessage())
+			boolean wardens = e.getMessage().contains("Wardens");
+			updatePersonalPartyPoints(wardens);
+
+			if (wardens && config.pointsTrackerPostRaidMessage())
 			{
 				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", buildPointsMessage(), "", false);
 			}
@@ -266,7 +268,7 @@ public class PointsTracker implements PluginLifecycleComponent
 		if (e.getHitsplat().isMine() || WARDEN_HITSPLAT_TYPES.contains(e.getHitsplat().getHitsplatType()))
 		{
 			this.personalRoomPoints = (int) Math.min(MAX_ROOM_POINTS, personalRoomPoints + e.getHitsplat().getAmount() * factor);
-			updatePersonalPartyPoints();
+			updatePersonalPartyPoints(false);
 		}
 	}
 
@@ -277,7 +279,7 @@ public class PointsTracker implements PluginLifecycleComponent
 		{
 			personalTotalPoints += 300 * teamSize;
 			seenMvpItems.add(e.getItem().getId());
-			updatePersonalPartyPoints();
+			updatePersonalPartyPoints(false);
 		}
 	}
 
@@ -340,14 +342,20 @@ public class PointsTracker implements PluginLifecycleComponent
 		this.seenMvpItems.clear();
 
 		partyPointsTracker.clearPartyPointsMap();
-		updatePersonalPartyPoints();
+		updatePersonalPartyPoints(true);
 	}
 
-	private void updatePersonalPartyPoints()
+	private void updatePersonalPartyPoints(boolean sendNow)
 	{
-		partyPointsTracker.sendPointsUpdate(
-			Math.min(MAX_TOTAL_POINTS, personalTotalPoints + personalRoomPoints) - BASE_POINTS
-		);
+		int points = Math.min(MAX_TOTAL_POINTS, personalTotalPoints + personalRoomPoints) - BASE_POINTS;
+		if (sendNow)
+		{
+			partyPointsTracker.sendPointsUpdate(points);
+		}
+		else
+		{
+			partyPointsTracker.schedulePointsUpdate(points);
+		}
 	}
 
 	private String buildPointsMessage()

@@ -33,7 +33,6 @@ public class RecordWriter {
 
     public void setPlayerUsername(final String username)
     {
-		System.out.println(username);
         if (username.equalsIgnoreCase(name))
         {
             return;
