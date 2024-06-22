@@ -7,10 +7,8 @@ import net.runelite.client.party.messages.PartyMemberMessage;
 
 @RequiredArgsConstructor
 @Getter
-public class PointsMessage extends PartyMemberMessage
+public class PointsMessageDry extends PartyMemberMessage
 {
-
 	@SerializedName("p")
 	private final int points;
-
 }

@@ -91,7 +91,12 @@ public class RaidsDryMeterPanel extends PluginPanel {
             remove(raidsPanel);
             raidsPanel = null;
         }
-        showSelectionView();
+		if (uniqueLog != null) {
+			useLog(uniqueLog);
+		} else
+		{
+			showSelectionView();
+		}
     }
 
     public void showSelectionView()

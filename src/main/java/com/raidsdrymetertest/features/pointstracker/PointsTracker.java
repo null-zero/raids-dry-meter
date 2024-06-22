@@ -31,6 +31,7 @@ import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.ItemSpawned;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.party.WSClient;
 import net.runelite.client.util.ColorUtil;
 
 @Slf4j
@@ -126,6 +127,7 @@ public class PointsTracker implements PluginLifecycleComponent
 		55 // max hit
 	);
 
+	private final WSClient wsClient;
 	private final EventBus eventBus;
 	private final Client client;
 	private final RaidsDryMeterTestConfig config;
@@ -152,6 +154,7 @@ public class PointsTracker implements PluginLifecycleComponent
 	@Override
 	public void startUp()
 	{
+		wsClient.registerMessage(PointsMessageDry.class);
 		eventBus.register(this);
 
 		reset();
@@ -160,6 +163,7 @@ public class PointsTracker implements PluginLifecycleComponent
 	@Override
 	public void shutDown()
 	{
+		wsClient.unregisterMessage(PointsMessageDry.class);
 		eventBus.unregister(this);
 	}
 
@@ -244,7 +248,7 @@ public class PointsTracker implements PluginLifecycleComponent
 
 			if (wardens && config.pointsTrackerPostRaidMessage())
 			{
-				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", buildPointsMessage(), "", false);
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", buildPointsMessageDry(), "", false);
 			}
 		}
 	}
@@ -358,7 +362,7 @@ public class PointsTracker implements PluginLifecycleComponent
 		}
 	}
 
-	private String buildPointsMessage()
+	private String buildPointsMessageDry()
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append("Total points: ");

@@ -2,7 +2,7 @@ package com.raidsdrymetertest.module;
 
 import com.raidsdrymetertest.RaidsDryMeterTestConfig;
 import com.raidsdrymetertest.features.pointstracker.PartyPointsTracker;
-import com.raidsdrymetertest.features.pointstracker.PointsOverlay;
+//import com.raidsdrymetertest.features.pointstracker.PointsOverlay;
 import com.raidsdrymetertest.features.pointstracker.PointsTracker;
 import com.raidsdrymetertest.util.RaidStateTracker;
 import com.google.inject.AbstractModule;
@@ -21,7 +21,7 @@ public class RaidsDryMeterTestModule extends AbstractModule
 	{
 		Multibinder<PluginLifecycleComponent> lifecycleComponents = Multibinder.newSetBinder(binder(), PluginLifecycleComponent.class);
 		lifecycleComponents.addBinding().to(PartyPointsTracker.class);
-		lifecycleComponents.addBinding().to(PointsOverlay.class);
+//		lifecycleComponents.addBinding().to(PointsOverlay.class);
 		lifecycleComponents.addBinding().to(PointsTracker.class);
 		lifecycleComponents.addBinding().to(RaidStateTracker.class);
 	}
