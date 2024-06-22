@@ -24,6 +24,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
@@ -75,6 +76,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
     String raidType;
 
+	private RuneScapeProfileType profileType;
 	@Inject
 	private PointsTracker pointsTracker;
 
@@ -267,7 +269,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
                 teamRaidsDry++;
 
             final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
-            final RaidRecord record = new RaidRecord(event.getName(), kc, partySize, personalPoints, totalPoints, personalRaidsDry,
+            final RaidRecord record = new RaidRecord(event.getName(), profileType.toString(), kc, partySize, personalPoints, totalPoints, personalRaidsDry,
                     teamRaidsDry, 0, 0, event.getType(), drops);
             addRecord(record);
 
@@ -323,7 +325,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
                 teamRaidsDry++;
 
             final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
-            final RaidRecord record = new RaidRecord(event.getName(), kc, getInvocationLevel(), partySize, personalPoints, totalPoints, personalRaidsDry,
+            final RaidRecord record = new RaidRecord(event.getName(), profileType.toString() , kc, getInvocationLevel(), partySize, personalPoints, totalPoints, personalRaidsDry,
                     teamRaidsDry, 0, 0, event.getType(), drops);
             addRecord(record);
 
@@ -410,8 +412,13 @@ public class RaidsDryMeterTestPlugin extends Plugin
 			String invoLevel = invoWidget.getText();
 			invocationLevel = Integer.parseInt(invoLevel.replaceAll("[^0-9]", ""));
 		}
+
+		if (chatMessage.contains("Challenge Mode")) {
+			raidLevel = 1;
+		}
+
         // Raids KC
-        if (chatMessage.startsWith("Your completed Chambers of Xeric count is"))
+        if (chatMessage.startsWith("Your completed Chambers of Xeric"))
         {
             Matcher n = NUMBER_PATTERN.matcher(chatMessage);
             if (n.find())

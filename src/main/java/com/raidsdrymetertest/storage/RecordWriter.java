@@ -103,7 +103,15 @@ public class RecordWriter {
                 if (line.length() > 0)
                 {
                     final RaidRecord r = RuneLiteAPI.GSON.fromJson(line, RaidRecord.class);
-                    data.add(r);
+					if (!Objects.equals(r.getProfileType(), "STANDARD") && !Objects.equals(r.getProfileType(), null)) {
+						continue;
+					}
+
+					if (r.getKillCount() == -1) {
+						continue;
+					}
+
+					data.add(r);
                 }
             }
 
