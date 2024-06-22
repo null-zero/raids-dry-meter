@@ -89,12 +89,9 @@ public class RaidsDryMeterTestPlugin extends Plugin
     int partySize = 0;
     int raidLevel = 0;
 
+	@Getter
 	public static int invocationLevel = 0;
-	public static int getInvocationLevel()
-	{
-		return invocationLevel;
-	}
-    List<RaidRecord> records;
+	List<RaidRecord> records;
 
     private boolean prepared = false;
 
@@ -119,7 +116,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
 		}
 		componentManager.onPluginStart();
         panel = new RaidsDryMeterPanel(this, itemManager);
-        final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
+        final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/util/dry_raids_icon.png");
 
         navButton = NavigationButton.builder()
                 .tooltip("Dry Meter for Raids Test")
@@ -147,7 +144,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
             });
         }
 
-        if (client.getGameState().equals(GameState.LOADING))
+        if (client.getGameState().equals(GameState.LOGGED_IN) || client.getGameState().equals(GameState.LOADING))
         {
             updateWriterUsername();
         }
@@ -202,7 +199,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
 				return false;
 			}
 
-			System.out.println("aaaaaa " + name);
+			profileType = RuneScapeProfileType.getCurrent(client);
 			updateWriterUsername();
 			//stops scheduling this task
 			return true;
@@ -231,8 +228,8 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
             drops = convertToUniqueRecords(event.getItems());
 
-            int totalPoints = client.getVar(Varbits.TOTAL_POINTS);
-            int personalPoints = client.getVar(Varbits.PERSONAL_POINTS);
+            int totalPoints = client.getVarbitValue(Varbits.TOTAL_POINTS);
+            int personalPoints = client.getVarbitValue(Varbits.PERSONAL_POINTS);
 
             for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
                 for(ItemStack item : event.getItems())
@@ -248,7 +245,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
             int teamRaidsDry;
 
             records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
-            if(records.size() == 0)
+            if(records.isEmpty())
             {
                 personalRaidsDry = 0;
                 teamRaidsDry = 0;
@@ -282,7 +279,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
         } else if (event.getName().equals("Tombs of Amascut")) {
 
             Collection<UniqueEntry> drops;
-            raidLevel = client.getVar(Varbits.TOA_RAID_LEVEL);
+            raidLevel = client.getVarbitValue(Varbits.TOA_RAID_LEVEL);
             partySize = client.getPlayers().size();
 
             drops = convertToUniqueRecords(event.getItems());
@@ -304,7 +301,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
             int teamRaidsDry;
 
             records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
-            if(records.size() == 0)
+            if(records.isEmpty())
             {
                 personalRaidsDry = 0;
                 teamRaidsDry = 0;
@@ -345,7 +342,7 @@ public class RaidsDryMeterTestPlugin extends Plugin
 
     private void updateWriterUsername()
     {
-        writer.setPlayerUsername(client.getLocalPlayer().getName());
+        writer.setPlayerUsername(Objects.requireNonNull(client.getLocalPlayer().getName()));
         localPlayerNameChanged();
     }
 
