@@ -17,7 +17,8 @@ import java.util.Map;
 public enum RaidTab {
 
     COX("Chambers of Xeric", ItemID.OLMLET, "Raids", LootRecordType.EVENT),
-    TOB("Theater of Blood", ItemID.LIL_ZIK, "Raids", LootRecordType.EVENT);
+    TOB("Theater of Blood", ItemID.LIL_ZIK, "Raids", LootRecordType.EVENT),
+	TOA("Tombs of Amascut", ItemID.TUMEKENS_GUARDIAN, "Raids", LootRecordType.EVENT);
 
     private final String name;
     private final int itemID;

@@ -3,6 +3,7 @@ package com.raidsdrymeter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
+import com.google.inject.Binder;
 import javax.inject.Inject;
 import javax.swing.*;
 
@@ -13,12 +14,16 @@ import com.raidsdrymeter.storage.RaidRecord;
 import com.raidsdrymeter.storage.RecordWriter;
 import com.raidsdrymeter.storage.UniqueEntry;
 import com.raidsdrymeter.ui.RaidsDryMeterPanel;
+import com.raidsdrymeter.features.pointstracker.PointsTracker;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
@@ -39,266 +44,401 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.raidsdrymeter.module.ComponentManager;
+import com.raidsdrymeter.module.RaidsDryMeterModule;
+
 @Slf4j
 @PluginDescriptor(
-        name = "Dry Meter for Raids",
-        description = "Tracks how dry you are while raiding with different group sizes"
+	name = "Dry Meter for Raids",
+	description = "Tracks how dry you are while raiding with different group sizes"
 )
 public class RaidsDryMeterPlugin extends Plugin
 {
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("([0-9]+)");
-    @Inject
-    private Client client;
+	private static final Pattern NUMBER_PATTERN = Pattern.compile("([0-9]+)");
+	@Inject
+	private Client client;
 
-    @Inject
-    private ClientThread clientThread;
+	@Inject
+	private ClientThread clientThread;
 
-    @Inject
-    private ClientToolbar clientToolbar;
+	@Inject
+	private ClientToolbar clientToolbar;
 
-    @Inject
-    private SpriteManager spriteManager;
+	@Inject
+	private SpriteManager spriteManager;
 
-    @Inject
-    private ItemManager itemManager;
+	@Inject
+	private ItemManager itemManager;
 
-    @Inject
-    private RecordWriter writer;
+	@Inject
+	private RecordWriter writer;
 
-    String raidType;
+	String raidType;
 
-    private RaidsDryMeterPanel panel;
-    private NavigationButton navButton;
+	private RuneScapeProfileType profileType;
+	@Inject
+	private PointsTracker pointsTracker;
 
-    @Getter
-    private SetMultimap<LootRecordType, String> lootNames = HashMultimap.create();
+	private RaidsDryMeterPanel panel;
+	private NavigationButton navButton;
 
-    boolean personalUnique = false;
-    boolean teamUnique = false;
-    int partySize = 0;
+	@Getter
+	private SetMultimap<LootRecordType, String> lootNames = HashMultimap.create();
 
-    List<RaidRecord> records;
+	boolean personalUnique = false;
+	boolean teamUnique = false;
+	int partySize = 0;
+	int raidLevel = 0;
 
-    private boolean prepared = false;
+	@Getter
+	public static int invocationLevel = 0;
+	List<RaidRecord> records;
 
-    private Map<String, Integer> killCountMap = new HashMap<>();
+	private boolean prepared = false;
 
-    @Override
-    protected void startUp() throws Exception
-    {
-        panel = new RaidsDryMeterPanel(this, itemManager);
-        final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
+	private Map<String, Integer> killCountMap = new HashMap<>();
 
-        navButton = NavigationButton.builder()
-                .tooltip("Dry Meter for Raids")
-                .icon(icon)
-                .priority(5)
-                .panel(panel)
-                .build();
+	private ComponentManager componentManager = null;
 
-        clientToolbar.addNavigation(navButton);
+	@Override
+	public void configure(Binder binder)
+	{
+		binder.install(new RaidsDryMeterModule());
+	}
+	@Override
+	protected void startUp() throws Exception
+	{
+		if (componentManager == null)
+		{
+			componentManager = injector.getInstance(ComponentManager.class);
+		}
+		componentManager.onPluginStart();
+		panel = new RaidsDryMeterPanel(this, itemManager);
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/util/dry_raids_icon.png");
 
-        if (!prepared)
-        {
-            prepared = true;
-            clientThread.invokeLater(() ->
-            {
-                switch (client.getGameState())
-                {
-                    case UNKNOWN:
-                    case STARTING:
-                        return false;
-                }
+		navButton = NavigationButton.builder()
+			.tooltip("Dry Meter for Raids")
+			.icon(icon)
+			.priority(5)
+			.panel(panel)
+			.build();
 
-                UniqueItem.prepareUniqueItems(itemManager);
-                return true;
-            });
-        }
+		clientToolbar.addNavigation(navButton);
 
-        if (client.getGameState().equals(GameState.LOGGED_IN) || client.getGameState().equals(GameState.LOADING))
-        {
-            updateWriterUsername();
-        }
+		if (!prepared)
+		{
+			prepared = true;
+			clientThread.invokeLater(() ->
+			{
+				switch (client.getGameState())
+				{
+					case UNKNOWN:
+					case STARTING:
+						return false;
+				}
 
-    }
+				UniqueItem.prepareUniqueItems(itemManager);
+				return true;
+			});
+		}
 
-    @Override
-    protected void shutDown()
-    {
-        clientToolbar.removeNavigation(navButton);
-    }
-    @Subscribe
-    public void onGameStateChanged(final GameStateChanged event)
-    {
-        if (event.getGameState() == GameState.LOGGING_IN)
-        {
-            updateWriterUsername();
-        }
-    }
+		if (client.getGameState().equals(GameState.LOGGED_IN) || client.getGameState().equals(GameState.LOADING))
+		{
+			updateWriterUsername();
+		}
 
-    @Subscribe
-    public void onLootReceived(final LootReceived event)
-    {
+	}
 
-        if(event.getName().equals("Chambers of Xeric")) {
+	@Override
+	protected void shutDown()
+	{
+		clientToolbar.removeNavigation(navButton);
+	}
 
-            Collection<UniqueEntry> drops;
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		if (event.getGameState() == GameState.LOGGED_IN)
+		{
+			onLoggedInGameState();
+		}
+//		} else if (event.getGameState() == GameState.LOGIN_SCREEN && previouslyLoggedIn) {
+//			//this randomly fired at night hours after i had logged off...so i'm adding this guard here.
+//			if (currentlyLoggedInAccount != null && client.getGameState() != GameState.LOGGED_IN) {
+//				handleLogout();
+//			}
+//		}
+	}
 
-            partySize = client.getPlayers().size();
+	private void onLoggedInGameState() {
+		//keep scheduling this task until it returns true (when we have access to a display name)
+		clientThread.invokeLater(() ->
+		{
+			//we return true in this case as something went wrong and somehow the state isn't logged in, so we don't
+			//want to keep scheduling this task.
+			if (client.getGameState() != GameState.LOGGED_IN) {
+				return true;
+			}
 
-            drops = convertToUniqueRecords(event.getItems());
+			final Player player = client.getLocalPlayer();
 
-            int totalPoints = client.getVar(Varbits.TOTAL_POINTS);
-            int personalPoints = client.getVar(Varbits.PERSONAL_POINTS);
+			//player is null, so we can't get the display name so, return false, which will schedule
+			//the task on the client thread again.
+			if (player == null) {
+				return false;
+			}
 
-            for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
-                for(ItemStack item : event.getItems())
-                {
-                    if(item.getId() == uniqueId)
-                    {
-                        personalUnique = true;
-                    }
-                }
-            }
+			final String name = player.getName();
 
-            int personalRaidsDry;
-            int teamRaidsDry;
+			if (name == null) {
+				return false;
+			}
 
-            records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
-            if(records.size() == 0)
-            {
-                personalRaidsDry = 0;
-                teamRaidsDry = 0;
-            }
-            else {
-                int index = records.size() - 1;
-                personalRaidsDry = records.get(index).getPersonalRaidsDry();
-                teamRaidsDry = records.get(index).getTeamRaidsDry();
-            }
+			if (name.equals("")) {
+				return false;
+			}
 
-            if(personalUnique)
-                personalRaidsDry = 0;
-            else
-                personalRaidsDry++;
+			profileType = RuneScapeProfileType.getCurrent(client);
+			updateWriterUsername();
+			//stops scheduling this task
+			return true;
+		});
+	}
 
-            if(teamUnique)
-                teamRaidsDry = 0;
-            else
-                teamRaidsDry++;
+	@Subscribe
+	public void onLootReceived(final LootReceived event)
+	{
 
-            final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
-            final RaidRecord record = new RaidRecord(event.getName(), kc, partySize, personalPoints, totalPoints, personalRaidsDry,
-                    teamRaidsDry, 0, 0, event.getType(), drops);
-            addRecord(record);
+		if(event.getName().equals("Chambers of Xeric")) {
 
-            personalUnique = false;
-            teamUnique = false;
+			Collection<UniqueEntry> drops;
+			raidLevel = 0;
+			partySize = client.getPlayers().size();
 
+			drops = convertToUniqueRecords(event.getItems());
 
-            SwingUtilities.invokeLater(() -> panel.refreshUI());
-        }
-    }
+			int totalPoints = client.getVarbitValue(Varbits.TOTAL_POINTS);
+			int personalPoints = client.getVarbitValue(Varbits.PERSONAL_POINTS);
 
-    private void setRaidType(String raidType)
-    {
-        this.raidType = raidType;
-    }
+			for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
+				for(ItemStack item : event.getItems())
+				{
+					if(item.getId() == uniqueId)
+					{
+						personalUnique = true;
+					}
+				}
+			}
 
-    private void updateWriterUsername()
-    {
-        writer.setPlayerUsername(client.getUsername());
-        localPlayerNameChanged();
-    }
+			int personalRaidsDry;
+			int teamRaidsDry;
 
-    private void localPlayerNameChanged()
-    {
-        lootNames = writer.getKnownFileNames();
-        SwingUtilities.invokeLater(() -> panel.refreshUI());
-    }
+			records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
+			if(records.isEmpty())
+			{
+				personalRaidsDry = 0;
+				teamRaidsDry = 0;
+			}
+			else {
+				int index = records.size() - 1;
+				personalRaidsDry = records.get(index).getPersonalRaidsDry();
+				teamRaidsDry = records.get(index).getTeamRaidsDry();
+			}
 
-    private Collection<UniqueEntry> convertToUniqueRecords(Collection<ItemStack> stacks)
-    {
-        return stacks.stream().map(i -> createUniqueRecord(i.getId(), i.getQuantity())).collect(Collectors.toList());
-    }
+			if(personalUnique)
+				personalRaidsDry = 0;
+			else
+				personalRaidsDry++;
 
-    private UniqueEntry createUniqueRecord(final int id, final int qty)
-    {
-        final ItemComposition c = itemManager.getItemComposition(id);
-        final int realId = c.getNote() == -1 ? c.getId() : c.getLinkedNoteId();
-        final int price = itemManager.getItemPrice(realId);
-        return new UniqueEntry(c.getName(), id, qty, price);
-    }
+			if(teamUnique)
+				teamRaidsDry = 0;
+			else
+				teamRaidsDry++;
 
-    private void addRecord(final RaidRecord record)
-    {
-        writer.addRaidRecord(record);
-        lootNames.put(record.getType(), record.getName().toLowerCase());
+			final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
+			final RaidRecord record = new RaidRecord(event.getName(), profileType.toString(), kc, partySize, personalPoints, totalPoints, personalRaidsDry,
+				teamRaidsDry, 0, 0, event.getType(), drops);
+			addRecord(record);
 
-        SwingUtilities.invokeLater(() -> panel.addLog(record));
-
-    }
-
-    public void requestUniqueLog(final LootRecordType type, final String name)
-    {
-        clientThread.invoke(() ->
-        {
-            final Collection<RaidRecord> records = getDataByName(type, name);
-            final UniqueLog log = new UniqueLog(records, name);
-            SwingUtilities.invokeLater(() -> panel.useLog(log));
-        });
-    }
-    public Collection<RaidRecord> getDataByName(LootRecordType type, String name)
-    {
-        final RaidTab tab = RaidTab.getByName(name);
-        if (tab != null)
-        {
-            name = tab.getName();
-        }
-
-        return writer.loadRaidTrackerRecords(type, name);
-    }
+			personalUnique = false;
+			teamUnique = false;
 
 
-    @Subscribe
-    public void onChatMessage(ChatMessage event)
-    {
-        if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
-        {
-            return;
-        }
+			SwingUtilities.invokeLater(() -> panel.refreshUI());
+		} else if (event.getName().equals("Tombs of Amascut")) {
 
-        final String chatMessage = Text.removeTags(event.getMessage());
+			Collection<UniqueEntry> drops;
+			raidLevel = client.getVarbitValue(Varbits.TOA_RAID_LEVEL);
+			partySize = client.getPlayers().size();
 
-        // Raids KC
-        if (chatMessage.startsWith("Your completed Chambers of Xeric count is"))
-        {
-            Matcher n = NUMBER_PATTERN.matcher(chatMessage);
-            if (n.find())
-            {
-                killCountMap.put("CHAMBERS OF XERIC", Integer.valueOf(n.group()));
-                return;
-            }
-        }
+			drops = convertToUniqueRecords(event.getItems());
 
-        // Tob KC
-        if (chatMessage.startsWith("Your completed Theatre of Blood count is"))
-        {
-            Matcher n = NUMBER_PATTERN.matcher(chatMessage);
-            if (n.find())
-            {
-                killCountMap.put("THEATRE OF BLOOD", Integer.valueOf(n.group()));
-                return;
-            }
-        }
+			int totalPoints = pointsTracker.getTotalPoints();
+			int personalPoints = pointsTracker.getPersonalTotalPoints();
 
-        if (chatMessage.startsWith("Special loot:"))
-        {
-            teamUnique = true;
-        }
+			for (int uniqueId : UniqueItem.getUniqueItemList(itemManager)){
+				for(ItemStack item : event.getItems())
+				{
+					if(item.getId() == uniqueId)
+					{
+						personalUnique = true;
+					}
+				}
+			}
 
-    }
+			int personalRaidsDry;
+			int teamRaidsDry;
+
+			records = new ArrayList<>(getDataByName(event.getType(), event.getName()));
+			if(records.isEmpty())
+			{
+				personalRaidsDry = 0;
+				teamRaidsDry = 0;
+			}
+			else {
+				int index = records.size() - 1;
+				personalRaidsDry = records.get(index).getPersonalRaidsDry();
+				teamRaidsDry = records.get(index).getTeamRaidsDry();
+			}
+
+			if(personalUnique)
+				personalRaidsDry = 0;
+			else
+				personalRaidsDry++;
+
+			if(teamUnique)
+				teamRaidsDry = 0;
+			else
+				teamRaidsDry++;
+
+			final int kc = killCountMap.getOrDefault(event.getName().toUpperCase(), -1);
+			final RaidRecord record = new RaidRecord(event.getName(), profileType.toString() , kc, getInvocationLevel(), partySize, personalPoints, totalPoints, personalRaidsDry,
+				teamRaidsDry, 0, 0, event.getType(), drops);
+			addRecord(record);
+
+			personalUnique = false;
+			teamUnique = false;
 
 
+			SwingUtilities.invokeLater(() -> panel.refreshUI());
+		}
+	}
+
+	private void setRaidType(String raidType)
+	{
+		this.raidType = raidType;
+	}
+
+	private void updateWriterUsername()
+	{
+		writer.setPlayerUsername(Objects.requireNonNull(client.getLocalPlayer().getName()));
+		localPlayerNameChanged();
+	}
+
+	private void localPlayerNameChanged()
+	{
+		lootNames = writer.getKnownFileNames();
+		SwingUtilities.invokeLater(() -> panel.refreshUI());
+	}
+
+	private Collection<UniqueEntry> convertToUniqueRecords(Collection<ItemStack> stacks)
+	{
+		return stacks.stream().map(i -> createUniqueRecord(i.getId(), i.getQuantity())).collect(Collectors.toList());
+	}
+
+	private UniqueEntry createUniqueRecord(final int id, final int qty)
+	{
+		final ItemComposition c = itemManager.getItemComposition(id);
+		final int realId = c.getNote() == -1 ? c.getId() : c.getLinkedNoteId();
+		final int price = itemManager.getItemPrice(realId);
+		return new UniqueEntry(c.getName(), id, qty, price);
+	}
+
+	private void addRecord(final RaidRecord record)
+	{
+		writer.addRaidRecord(record);
+		lootNames.put(record.getType(), record.getName().toLowerCase());
+
+		SwingUtilities.invokeLater(() -> panel.addLog(record));
+
+	}
+
+	public void requestUniqueLog(final LootRecordType type, final String name)
+	{
+		clientThread.invoke(() ->
+		{
+			final Collection<RaidRecord> records = getDataByName(type, name);
+			final UniqueLog log = new UniqueLog(records, name);
+			SwingUtilities.invokeLater(() -> panel.useLog(log));
+		});
+	}
+	public Collection<RaidRecord> getDataByName(LootRecordType type, String name)
+	{
+		final RaidTab tab = RaidTab.getByName(name);
+		if (tab != null)
+		{
+			name = tab.getName();
+		}
+
+		return writer.loadRaidTrackerRecords(type, name);
+	}
 
 
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
+		{
+			return;
+		}
+
+		final String chatMessage = Text.removeTags(event.getMessage());
+		Widget invoWidget = client.getWidget(WidgetID.TOA_RAID_GROUP_ID, 42);
+
+		if(invoWidget != null) {
+			String invoLevel = invoWidget.getText();
+			invocationLevel = Integer.parseInt(invoLevel.replaceAll("[^0-9]", ""));
+		}
+
+		if (chatMessage.contains("Challenge Mode")) {
+			raidLevel = 1;
+		}
+
+		// Raids KC
+		if (chatMessage.startsWith("Your completed Chambers of Xeric"))
+		{
+			Matcher n = NUMBER_PATTERN.matcher(chatMessage);
+			if (n.find())
+			{
+				killCountMap.put("CHAMBERS OF XERIC", Integer.valueOf(n.group()));
+				return;
+			}
+		}
+
+		// Tob KC
+		if (chatMessage.startsWith("Your completed Theatre of Blood count is"))
+		{
+			Matcher n = NUMBER_PATTERN.matcher(chatMessage);
+			if (n.find())
+			{
+				killCountMap.put("THEATRE OF BLOOD", Integer.valueOf(n.group()));
+				return;
+			}
+		}
+
+		// Toa KC
+		if (chatMessage.startsWith("Your completed Tombs of Amascut"))
+		{
+			Matcher n = NUMBER_PATTERN.matcher(chatMessage);
+			if (n.find())
+			{
+				killCountMap.put("TOMBS OF AMASCUT", Integer.valueOf(n.group()));
+				return;
+			}
+		}
+
+		if (chatMessage.startsWith("Special loot:"))
+		{
+			teamUnique = true;
+		}
+	}
 }

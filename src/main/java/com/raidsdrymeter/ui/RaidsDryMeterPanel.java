@@ -92,7 +92,14 @@ public class RaidsDryMeterPanel extends PluginPanel {
             remove(raidsPanel);
             raidsPanel = null;
         }
-        showSelectionView();
+
+		// Fixes bug when entering or leaving TOA rooms, panel sometimes resets to selection view
+		if (uniqueLog != null) {
+			useLog(uniqueLog);
+		} else
+		{
+			showSelectionView();
+		}
     }
 
     public void showSelectionView()
