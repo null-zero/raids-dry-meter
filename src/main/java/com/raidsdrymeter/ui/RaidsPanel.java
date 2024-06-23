@@ -97,9 +97,9 @@ public class RaidsPanel extends PluginPanel {
 			final RaidRecord record = uniqueLog.getRecords().get(amount - 1);
 			int personalRaidsDry = record.getPersonalRaidsDry();
 
-			int normalKC = 0;
-			int cmKC = 0;
-			int totalKC = 0;
+			int normalRaids = 0;
+			int cmRaids = 0;
+			int totalRaids = 0;
 			int personalPointsDry = 0;
 			double personalRaidsOdds = 0;
 			int totalPoints = 0;
@@ -112,12 +112,12 @@ public class RaidsPanel extends PluginPanel {
 				for (; x < uniqueLog.getRecords().size(); x++) {
 					raidLevel = uniqueLog.getRecords().get(x).getRaidLevel();
 					if (raidLevel == 0) {
-						normalKC++;
+						normalRaids++;
 					} else {
-						cmKC++;
+						cmRaids++;
 					}
 				}
-				totalKC = normalKC + cmKC;
+				totalRaids = normalRaids + cmRaids;
 			}
 
 			if(personalRaidsDry != 0)
@@ -150,7 +150,7 @@ public class RaidsPanel extends PluginPanel {
 				this.add(p, c);
 				c.gridy++;
 
-				final DataPanel p2 = new DataPanel("Logged KC: ", totalKC, normalKC, cmKC);
+				final DataPanel p2 = new DataPanel("Logged KC: ", totalRaids, normalRaids, cmRaids);
 				c.insets = new Insets(4, 0, 0, 0);
 				c.ipadx = 0;
 				c.ipady = 0;
@@ -220,6 +220,7 @@ public class RaidsPanel extends PluginPanel {
 			int personalStreak = 0;
 			int raidLevelKC = 0;
 			int totalKC = 0;
+			int totalRaids = 0;
 
 			if (!uniqueLog.getRecords().isEmpty()) {
 				int raidLevel = 0;
@@ -245,7 +246,7 @@ public class RaidsPanel extends PluginPanel {
 						normalRaids++;
 					}
 				}
-				totalKC = entryKC + expertKC + normalKC;
+				totalRaids = entryRaids + expertRaids + normalRaids;
 			}
 
 			if(personalRaidsDry != 0)
@@ -282,7 +283,7 @@ public class RaidsPanel extends PluginPanel {
 				c.gridy++;
 				this.add(p, c);
 
-				final DataPanel p2 = new DataPanel("Logged KC: ", totalKC, entryRaids, normalRaids, expertRaids);
+				final DataPanel p2 = new DataPanel("Logged KC: ", totalRaids, entryRaids, normalRaids, expertRaids);
 				c.insets = new Insets(4, 0, 0, 0);
 				c.gridy++;
 				c.ipadx = 0;
