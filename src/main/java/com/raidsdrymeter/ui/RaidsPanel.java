@@ -183,12 +183,12 @@ public class RaidsPanel extends PluginPanel {
 				this.add(p12, c);
 				c.gridy++;
 
-				holder = String.format("%,.2f", getEstimateGpPerPoint("CoX", (double) totalPoints));
+				holder = String.format("%,.2f", getEstimateGpPerPoint());
 				final DataPanel p13 = new DataPanel("Est. Gp per Point: ", holder);
 				this.add(p13, c);
 				c.gridy++;
 
-				holder = String.format("%,.2f", getActualGpPerPoints("CoX"));
+				holder = String.format("%,.2f", getActualGpPerPoints());
 				final DataPanel p14 = new DataPanel("Actual. Gp Per Personal Point: ", holder);
 				this.add(p14, c);
 				c.gridy++;
@@ -221,7 +221,6 @@ public class RaidsPanel extends PluginPanel {
 			int raidLevelKC = 0;
 			int totalKC = 0;
 			int totalRaids = 0;
-			double totalPercent = 0;
 
 			if (!uniqueLog.getRecords().isEmpty()) {
 				int raidLevel = 0;
@@ -259,29 +258,20 @@ public class RaidsPanel extends PluginPanel {
 
 				for(;x < uniqueLog.getRecords().size(); x++)
 				{
-					int raidlevel = uniqueLog.getRecords().get(x).getRaidLevel();
-					int personalPoints = uniqueLog.getRecords().get(x).getPersonalPoints();
 					totalPoints += uniqueLog.getRecords().get(x).getPersonalPoints();
-					int X = raidlevel > 400 ? 400 : raidlevel;
-					int Y = raidlevel > 400 ? 550 - raidlevel : 0;
-					int calc = 10500 - (20 * (X + (Y / 3)));
-					double calc2 = (double) personalPoints / calc;
-					double percent = (double) Math.round(calc2 * 100.0) / 10000;
-					totalPercent += percent;
-
-					if(totalPercent < 1)
+					if(totalPoints < 867600)
 					{
 						personalPointsDry += uniqueLog.getRecords().get(x).getPersonalPoints();
 					}
-					if(totalPercent > 1)
+					if(totalPoints > 867600)
 					{
-						totalPercent -= 1;
+						totalPoints -= 867600;
 						personalStreak++;
 						personalPointsDry += uniqueLog.getRecords().get(x).getPersonalPoints();
 					}
 				}
 
-				personalRaidsOdds = (totalPercent / (1 - totalPercent)) * 100;
+				personalRaidsOdds = 867600/(double)(personalPointsDry/personalRaidsDry);
 
 			}
 
@@ -329,12 +319,12 @@ public class RaidsPanel extends PluginPanel {
 				c.gridy++;
 				this.add(p12, c);
 
-				holder = String.format("%,.2f", getEstimateGpPerPoint("ToA", (totalPoints / totalPercent)));
+				holder = String.format("%,.2f", getEstimateGpPerPoint());
 				final DataPanel p13 = new DataPanel("Est. Gp per Point: ", holder);
 				c.gridy++;
 				this.add(p13, c);
 
-				holder = String.format("%,.2f", getActualGpPerPoints("ToA"));
+				holder = String.format("%,.2f", getActualGpPerPoints());
 				final DataPanel p14 = new DataPanel("Actual. Gp Per Personal Point: ", holder);
 				c.gridy++;
 				this.add(p14, c);
@@ -355,71 +345,36 @@ public class RaidsPanel extends PluginPanel {
 		this.repaint();
 	}
 
-	double getEstimateGpPerPoint(String raid, double rate)
+	double getEstimateGpPerPoint()
 	{
 		double gpPerPoint = 0;
-		List<UniqueItem> uniqueItems;
-		switch (raid) {
-			case "CoX":
-				uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Chambers of Xeric"));
-				for (UniqueItem uniqueItem : uniqueItems) {
-					double dropRate = uniqueItem.getDropRate();
-					gpPerPoint += (uniqueItem.getPrice() / (712500 / dropRate));
-				}
-				break;
-			case "ToA":
-				uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Tombs of Amascut"));
-				for (UniqueItem uniqueItem : uniqueItems) {
-					double dropRate = uniqueItem.getDropRate();
-					System.out.println(dropRate);
-					gpPerPoint += (uniqueItem.getPrice() / (rate / dropRate));
-				}
-				break;
+		List<UniqueItem> uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Chambers of Xeric"));
+		for (UniqueItem uniqueItem : uniqueItems) {
+			double dropRate = uniqueItem.getDropRate();
+			gpPerPoint += (uniqueItem.getPrice() / (712500 / dropRate));
 		}
 		return gpPerPoint;
 	}
 
-	double getActualGpPerPoints(String raid)
+	double getActualGpPerPoints()
 	{
 		double gp = 0;
 		List<RaidRecord> records = new ArrayList<>(uniqueLog.getRecords());
-		List<UniqueItem> uniqueItems;
+		List<UniqueItem> uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Chambers of Xeric"));
 		double totalPoints = 0;
-		switch (raid) {
-			case "CoX":
-				uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Chambers of Xeric"));
-				for (RaidRecord record : records)
+		for (RaidRecord record : records)
+		{
+			List<UniqueEntry> uniqueDrops = new ArrayList<>(record.getUniques());
+			totalPoints += record.getPersonalPoints();
+			for(UniqueEntry uniqueDrop : uniqueDrops)
+			{
+				for(UniqueItem uniqueItem : uniqueItems)
 				{
-					List<UniqueEntry> uniqueDrops = new ArrayList<>(record.getUniques());
-					totalPoints += record.getPersonalPoints();
-					for(UniqueEntry uniqueDrop : uniqueDrops)
-					{
-						for(UniqueItem uniqueItem : uniqueItems)
-						{
-							if(uniqueDrop.getId() == uniqueItem.getItemID())
-								gp += uniqueItem.getPrice();
-						}
-					}
-
+					if(uniqueDrop.getId() == uniqueItem.getItemID())
+						gp += uniqueItem.getPrice();
 				}
-				break;
-			case "ToA":
-				uniqueItems = new ArrayList<>(UniqueItem.getUniquesForBoss("Tombs of Amascut"));
-				for (RaidRecord record : records)
-				{
-					List<UniqueEntry> uniqueDrops = new ArrayList<>(record.getUniques());
-					totalPoints += record.getPersonalPoints();
-					for(UniqueEntry uniqueDrop : uniqueDrops)
-					{
-						for(UniqueItem uniqueItem : uniqueItems)
-						{
-							if(uniqueDrop.getId() == uniqueItem.getItemID())
-								gp += uniqueItem.getPrice();
-						}
-					}
+			}
 
-				}
-				break;
 		}
 
 		return gp / totalPoints;
