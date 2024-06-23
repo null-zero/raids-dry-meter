@@ -10,6 +10,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class RaidRecord {
 	private final String name;
+	private String profileType;
 	private final int killCount;
 	private int raidLevel;
 	private final int partySize;
@@ -22,12 +23,9 @@ public class RaidRecord {
 	private LootRecordType type;
 	final Collection<UniqueEntry> uniques;
 
-    public void addUnique(UniqueEntry uniqueEntry)
-    {
-        uniques.add(uniqueEntry);
-    }
-	public RaidRecord(String n, int kc, int ps,int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
+	public RaidRecord(String n, String pt, int kc, int ps,int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
 		name = n;
+		profileType = pt;
 		killCount = kc;
 		partySize = ps;
 		personalPoints = pp;
@@ -40,8 +38,9 @@ public class RaidRecord {
 		uniques = d;
 	}
 
-	public RaidRecord(String n, int kc, int rl, int ps, int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
+	public RaidRecord(String n, String pt, int kc, int rl, int ps, int pp, int tp, int prd, int trd, int pd, int td, LootRecordType t, Collection<UniqueEntry> d) {
 		name = n;
+		profileType = pt;
 		killCount = kc;
 		raidLevel = rl;
 		partySize = ps;

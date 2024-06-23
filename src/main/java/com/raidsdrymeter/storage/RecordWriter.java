@@ -94,18 +94,26 @@ public class RecordWriter {
 		final File file = new File(folder, fileName);
 		final Collection<RaidRecord> data = new ArrayList<>();
 
-        try (final BufferedReader br = new BufferedReader(new FileReader(file)))
-        {
-            String line;
-            while ((line = br.readLine()) != null)
-            {
-                // Skips the empty line at end of file
-                if (line.length() > 0)
-                {
-                    final RaidRecord r = RuneLiteAPI.GSON.fromJson(line, RaidRecord.class);
-                    data.add(r);
-                }
-            }
+		try (final BufferedReader br = new BufferedReader(new FileReader(file)))
+		{
+			String line;
+			while ((line = br.readLine()) != null)
+			{
+				// Skips the empty line at end of file
+				if (line.length() > 0)
+				{
+					final RaidRecord r = RuneLiteAPI.GSON.fromJson(line, RaidRecord.class);
+					if (!Objects.equals(r.getProfileType(), "STANDARD") && !Objects.equals(r.getProfileType(), null)) {
+						continue;
+					}
+
+					if (r.getKillCount() == -1) {
+						continue;
+					}
+
+					data.add(r);
+				}
+			}
 
 		}
 		catch (FileNotFoundException e)

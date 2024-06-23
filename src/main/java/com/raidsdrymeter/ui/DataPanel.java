@@ -209,11 +209,11 @@ public class DataPanel extends JPanel {
 		this.add(panel3, c);
 	}
 
-    DataPanel(String text, int data)
-    {
-        setLayout(new GridBagLayout());
-        setBorder(PANEL_BORDER);
-        setBackground(PANEL_BACKGROUND_COLOR);
+	DataPanel(String text, int data)
+	{
+		setLayout(new GridBagLayout());
+		setBorder(PANEL_BORDER);
+		setBackground(PANEL_BACKGROUND_COLOR);
 
 		JLabel textJ = new JLabel(text, SwingConstants.CENTER);
 
@@ -237,11 +237,51 @@ public class DataPanel extends JPanel {
 
 	}
 
-    DataPanel(String text, String formattedData)
-    {
-        setLayout(new GridBagLayout());
-        setBorder(PANEL_BORDER);
-        setBackground(PANEL_BACKGROUND_COLOR);
+	DataPanel(String text1, String text2, boolean bool)
+	{
+		setLayout(new GridBagLayout());
+		setBorder(PANEL_BORDER);
+		setBackground(PANEL_BACKGROUND_COLOR);
+
+		JLabel textJ1 = new JLabel(text1, SwingConstants.CENTER);
+		JLabel textJ2 = new JLabel(text2, SwingConstants.CENTER);
+
+
+
+		JPanel panel1 = createPanel(1, 1);
+		Border symmetricalDashedBorder = new SymmetricalDashedBorder(new float[]{10, 6}, 4, ColorScheme.DARK_GRAY_COLOR, 2);
+		Border empty = BorderFactory.createEmptyBorder(-5, 0, -5, 0);
+		panel1.setBorder(new CompoundBorder(empty, symmetricalDashedBorder));
+		panel1.add(textJ1);
+		final GridBagConstraints c = new GridBagConstraints();
+
+		c.insets = new Insets(8, 0, 8, 0);
+		c.fill = GridBagConstraints.BOTH;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 1;
+		c.weightx = 0.3;
+		c.ipadx = 35;
+		c.ipady = 15;
+		this.add(panel1, c);
+
+		JPanel panel2 = createPanel(1, 1);
+		panel2.add(textJ2);
+		c.insets = new Insets(8, 0, 8, 0);
+		c.fill = GridBagConstraints.BOTH;
+		c.gridx = 1;
+		c.gridy = 0;
+		c.gridwidth = 1;
+		c.weightx = 0.3;
+		c.ipadx = 35;
+		c.ipady = 15;
+		this.add(panel2, c);
+	}
+	DataPanel(String text, String formattedData)
+	{
+		setLayout(new GridBagLayout());
+		setBorder(PANEL_BORDER);
+		setBackground(PANEL_BACKGROUND_COLOR);
 
 		JLabel textJ = new JLabel(text, SwingConstants.CENTER);
 
@@ -252,12 +292,14 @@ public class DataPanel extends JPanel {
 		panel.add(textJ);
 		panel.add(total);
 
-        final GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.BOTH;
-        c.weightx = 1;
-        c.gridx = 0;
-        c.gridy = 0;
-        c.ipady = 15;
+		final GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(6, 0, 4, 8);
+		c.weightx = 1;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.ipadx = 40;
+		c.ipady = 15;
 
 		this.add(panel, c);
 

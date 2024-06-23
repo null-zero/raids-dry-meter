@@ -142,16 +142,20 @@ public class RaidsPanel extends PluginPanel {
 
 			}
 
-            if(record.getKillCount() != -1)
-            {
-                final DataPanel p = new DataPanel("KillCount: ", record.getKillCount());
-                this.add(p, c);
-                c.gridy++;
+			if(record.getKillCount() != -1)
+			{
+				final DataPanel p = new DataPanel("Normal", "CM", true);
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.insets = new Insets(4, 0, 0, 0);
+				this.add(p, c);
+				c.gridy++;
 
-                System.out.println(uniqueLog.getName() + uniqueLog.getRecords().size());
-                final DataPanel p2 = new DataPanel("Logged KC: ", uniqueLog.getRecords().size());
-                this.add(p2, c);
-                c.gridy++;
+				final DataPanel p2 = new DataPanel("Logged KC: ", totalKC, normalKC, cmKC);
+				c.insets = new Insets(4, 0, 0, 0);
+				c.ipadx = 0;
+				c.ipady = 0;
+				this.add(p2, c);
+				c.gridy++;
 
 				final DataPanel p3 = new DataPanel("Total Uniques: ", totalUniques);
 				this.add(p3, c);

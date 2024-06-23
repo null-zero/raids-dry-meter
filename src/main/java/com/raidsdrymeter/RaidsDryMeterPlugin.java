@@ -23,6 +23,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
@@ -74,6 +75,7 @@ public class RaidsDryMeterPlugin extends Plugin
 
 	String raidType;
 
+	private RuneScapeProfileType profileType;
 	@Inject
 	private PointsTracker pointsTracker;
 
@@ -389,7 +391,6 @@ public class RaidsDryMeterPlugin extends Plugin
 			return;
 		}
 
-        final String chatMessage = Text.removeTags(event.getMessage());
 		final String chatMessage = Text.removeTags(event.getMessage());
 		Widget invoWidget = client.getWidget(WidgetID.TOA_RAID_GROUP_ID, 42);
 
@@ -398,16 +399,20 @@ public class RaidsDryMeterPlugin extends Plugin
 			invocationLevel = Integer.parseInt(invoLevel.replaceAll("[^0-9]", ""));
 		}
 
-        // Raids KC
-        if (chatMessage.startsWith("Your completed Chambers of Xeric count is"))
-        {
-            Matcher n = NUMBER_PATTERN.matcher(chatMessage);
-            if (n.find())
-            {
-                killCountMap.put("CHAMBERS OF XERIC", Integer.valueOf(n.group()));
-                return;
-            }
-        }
+		if (chatMessage.contains("Challenge Mode")) {
+			raidLevel = 1;
+		}
+
+		// Raids KC
+		if (chatMessage.startsWith("Your completed Chambers of Xeric"))
+		{
+			Matcher n = NUMBER_PATTERN.matcher(chatMessage);
+			if (n.find())
+			{
+				killCountMap.put("CHAMBERS OF XERIC", Integer.valueOf(n.group()));
+				return;
+			}
+		}
 
 		// Tob KC
 		if (chatMessage.startsWith("Your completed Theatre of Blood count is"))
