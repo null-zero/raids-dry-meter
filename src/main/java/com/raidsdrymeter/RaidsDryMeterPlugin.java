@@ -3,6 +3,7 @@ package com.raidsdrymeter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
+import com.google.inject.Binder;
 import javax.inject.Inject;
 import javax.swing.*;
 
@@ -13,11 +14,14 @@ import com.raidsdrymeter.storage.RaidRecord;
 import com.raidsdrymeter.storage.RecordWriter;
 import com.raidsdrymeter.storage.UniqueEntry;
 import com.raidsdrymeter.ui.RaidsDryMeterPanel;
+import com.raidsdrymeter.features.pointstracker.PointsTracker;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
@@ -38,6 +42,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.raidsdrymeter.module.ComponentManager;
+import com.raidsdrymeter.module.RaidsDryMeterModule;
 
 @Slf4j
 @PluginDescriptor(
@@ -67,8 +74,11 @@ public class RaidsDryMeterPlugin extends Plugin
 
     String raidType;
 
-    private RaidsDryMeterPanel panel;
-    private NavigationButton navButton;
+	@Inject
+	private PointsTracker pointsTracker;
+
+	private RaidsDryMeterPanel panel;
+	private NavigationButton navButton;
 
     @Getter
     private SetMultimap<LootRecordType, String> lootNames = HashMultimap.create();
@@ -88,6 +98,23 @@ public class RaidsDryMeterPlugin extends Plugin
     {
         panel = new RaidsDryMeterPanel(this, itemManager);
         final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/util/dry_raids_icon.png");
+	private ComponentManager componentManager = null;
+
+	@Override
+	public void configure(Binder binder)
+	{
+		binder.install(new RaidsDryMeterModule());
+	}
+	@Override
+	protected void startUp() throws Exception
+	{
+		if (componentManager == null)
+		{
+			componentManager = injector.getInstance(ComponentManager.class);
+		}
+		componentManager.onPluginStart();
+		panel = new RaidsDryMeterPanel(this, itemManager);
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/util/dry_raids_icon.png");
 
         navButton = NavigationButton.builder()
                 .tooltip("Dry Meter for Raids")
@@ -122,19 +149,60 @@ public class RaidsDryMeterPlugin extends Plugin
 
     }
 
-    @Override
-    protected void shutDown()
-    {
-        clientToolbar.removeNavigation(navButton);
-    }
-    @Subscribe
-    public void onGameStateChanged(final GameStateChanged event)
-    {
-        if (event.getGameState() == GameState.LOGGING_IN)
-        {
-            updateWriterUsername();
-        }
-    }
+	@Override
+	protected void shutDown()
+	{
+		clientToolbar.removeNavigation(navButton);
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged event) {
+		if (event.getGameState() == GameState.LOGGED_IN)
+		{
+			onLoggedInGameState();
+		}
+//		} else if (event.getGameState() == GameState.LOGIN_SCREEN && previouslyLoggedIn) {
+//			//this randomly fired at night hours after i had logged off...so i'm adding this guard here.
+//			if (currentlyLoggedInAccount != null && client.getGameState() != GameState.LOGGED_IN) {
+//				handleLogout();
+//			}
+//		}
+	}
+
+	private void onLoggedInGameState() {
+		//keep scheduling this task until it returns true (when we have access to a display name)
+		clientThread.invokeLater(() ->
+		{
+			//we return true in this case as something went wrong and somehow the state isn't logged in, so we don't
+			//want to keep scheduling this task.
+			if (client.getGameState() != GameState.LOGGED_IN) {
+				return true;
+			}
+
+			final Player player = client.getLocalPlayer();
+
+			//player is null, so we can't get the display name so, return false, which will schedule
+			//the task on the client thread again.
+			if (player == null) {
+				return false;
+			}
+
+			final String name = player.getName();
+
+			if (name == null) {
+				return false;
+			}
+
+			if (name.equals("")) {
+				return false;
+			}
+
+			profileType = RuneScapeProfileType.getCurrent(client);
+			updateWriterUsername();
+			//stops scheduling this task
+			return true;
+		});
+	}
 
     @Subscribe
     public void onLootReceived(final LootReceived event)
